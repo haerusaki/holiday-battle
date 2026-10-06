@@ -1,0 +1,1299 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Holiday Battle</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+/* Layout: one centred column. Sticky HUD, battle stage on top, challenge panel below.
+   Single committed look: late-night 80s anime broadcast (sunset gradients, thick ink outlines, hard cel shadows). */
+:root{
+  color-scheme:dark;
+  --ink:#150a30; --night:#22104d; --night-2:#341a78; --cream:#fff4d2; --sun:#ffc93c; --orange:#ff8a3c;
+  --hot:#ff4f8b; --cyan:#4fe3ea; --good:#3ddc97; --bad:#ff6b7a; --mute:#c9bdf0;
+  --glow-a:#3a1c86; --glow-b:#6b1f6e;
+  --f-display:"Dela Gothic One","Arial Black",Impact,sans-serif;
+  --f-body:"M PLUS Rounded 1c","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:var(--f-body);font-size:18px;line-height:1.45;font-weight:500;
+  background-image:radial-gradient(circle at 15% 0,var(--glow-a) 0,transparent 45%),radial-gradient(circle at 90% 5%,var(--glow-b) 0,transparent 40%);background-attachment:fixed}
+.app{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:10px 32px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:4px solid var(--cyan);outline-offset:3px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.center{text-align:center;align-items:center;justify-content:center}
+.display{font-family:var(--f-display);font-weight:400;letter-spacing:.02em;line-height:1.1;text-wrap:balance}
+.eyebrow{font-size:.9rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sun)}
+.muted{color:var(--mute)}
+
+/* Buttons */
+.btn{--sh:var(--hot);display:inline-flex;align-items:center;justify-content:center;gap:.5em;min-height:58px;padding:.55em 1.2em;border:0;border-radius:16px;
+  background:var(--cream);color:var(--ink);font-weight:800;font-size:1.1rem;line-height:1.2;text-align:center;box-shadow:0 6px 0 var(--sh);transition:transform .08s,box-shadow .08s}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 var(--sh)}
+.btn.primary{background:var(--sun);--sh:var(--orange);font-size:1.25rem}
+.btn.ghost{background:transparent;color:var(--cream);box-shadow:inset 0 0 0 3px var(--cream)}
+.btn.small{min-height:48px;font-size:1rem;padding:.4em .9em}
+.btn.wide{width:100%}
+.btn:disabled{cursor:not-allowed}
+.btn.off{opacity:.5}
+.toggle[aria-pressed="true"]{background:var(--good);--sh:var(--cyan)}
+
+/* Title */
+.logo{font-family:var(--f-display);font-size:clamp(2.7rem,12vw,5.4rem);line-height:.95;transform:skew(-8deg) rotate(-3deg);
+  background:linear-gradient(180deg,var(--cream) 8%,var(--sun) 38%,var(--orange) 62%,var(--hot) 92%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(3px 3px 0 var(--ink)) drop-shadow(4px 4px 0 var(--cyan));padding:.1em .15em}
+.kana{font-family:var(--f-display);color:var(--cyan);letter-spacing:.35em;font-size:clamp(.9rem,3.6vw,1.3rem)}
+.howto{display:grid;gap:10px;padding:0;margin:0;list-style:none}
+.howto li{display:grid;grid-template-columns:2.2em 1fr;gap:10px;align-items:start;font-size:1.05rem}
+.howto b.ic{display:grid;place-items:center;width:2.2em;height:2.2em;border-radius:12px;background:var(--night-2);font-size:1rem}
+
+/* Panel = dialogue box */
+.panel{background:var(--night);border:3px solid var(--cream);border-radius:20px;padding:18px;box-shadow:6px 6px 0 var(--hot)}
+.prompt{font-size:clamp(1.3rem,4.8vw,1.7rem);font-weight:800;line-height:1.3;text-wrap:balance}
+.gap{display:inline-block;min-width:3em;border-bottom:4px solid var(--sun);color:var(--sun);text-align:center;line-height:1}
+.hintchip{display:inline-block;background:var(--night-2);border-radius:999px;padding:.1em .8em;font-weight:800;font-size:1rem}
+.verbcard{font-family:var(--f-display);font-size:clamp(2.2rem,10vw,3.4rem);text-align:center;color:var(--sun);text-shadow:4px 4px 0 var(--ink);background:var(--night-2);border-radius:16px;padding:.2em .4em}
+.badge{display:inline-block;border-radius:999px;padding:.15em .8em;font-weight:800;background:var(--good);color:var(--ink)}
+
+/* Options */
+.opts{display:grid;gap:14px;grid-template-columns:1fr}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opts.two .opt{padding-inline:.6em;gap:.4em;font-size:1.1rem}
+@media (min-width:600px){.opts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opt{justify-content:flex-start;text-align:left;font-size:1.2rem;--sh:var(--cyan);min-width:0;overflow-wrap:anywhere}
+.btn.primary:disabled{opacity:.5}
+.opt .k{flex:none;width:1.8em;height:1.8em;border-radius:50%;background:var(--ink);color:var(--cream);display:grid;place-items:center;font-size:.8em}
+.opt.is-right{background:var(--good);--sh:var(--cream)}
+.opt.is-wrong{background:var(--bad);--sh:var(--cream)}
+.opt.dim{opacity:.45}
+.inp{width:100%;min-height:58px;font:inherit;font-size:1.3rem;font-weight:800;padding:.4em .7em;border-radius:14px;border:3px solid var(--cream);background:var(--ink);color:var(--cream)}
+.inp.shake,.line.shake{animation:shake .3s}
+.typeform{display:grid;grid-template-columns:1fr auto;gap:12px}
+@media (max-width:480px){.typeform{grid-template-columns:1fr}}
+
+/* Order + build */
+.line{min-height:70px;border:3px dashed var(--mute);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:1.2rem;font-weight:800}
+.line .end{color:var(--sun);font-size:1.5rem}
+.tiles{display:flex;flex-wrap:wrap;gap:10px;min-height:56px}
+.tile{min-height:52px;padding:.35em .9em;border:0;border-radius:12px;background:var(--cream);color:var(--ink);font-weight:800;font-size:1.15rem;box-shadow:0 4px 0 var(--cyan)}
+.tile[aria-pressed="true"]{background:var(--sun);box-shadow:0 4px 0 var(--orange)}
+.tile:disabled{opacity:.6}
+.slot{display:grid;gap:6px}
+.preview{font-size:1.3rem;font-weight:800;color:var(--sun);min-height:1.5em}
+
+/* Chat (world 4) */
+.chat{background:var(--ink);border:3px solid var(--night-2);border-radius:16px;padding:12px;max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.bub{max-width:88%;padding:.45em .8em;border-radius:16px;font-size:1.05rem}
+.bub .who{display:block;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.bub.l{align-self:flex-start;background:var(--night-2);color:var(--cream);border-bottom-left-radius:4px}
+.bub.r{align-self:flex-end;background:var(--cyan);color:var(--ink);border-bottom-right-radius:4px}
+.bub.now{outline:3px dashed var(--sun);outline-offset:3px;font-weight:800;font-size:1.25rem}
+.bub.r .gap{color:var(--ink);border-color:var(--ink)}
+.bub b.fill{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px}
+
+/* Feedback */
+.fb{border:3px solid var(--cream);border-radius:16px;padding:16px;background:var(--ink);display:flex;flex-direction:column;gap:10px}
+.fb.ok{border-color:var(--good)} .fb.no{border-color:var(--bad)}
+.fb h3{font-family:var(--f-display);font-weight:400;font-size:1.5rem}
+.fb.ok h3{color:var(--good)} .fb.no h3{color:var(--bad)}
+.fb .ans{font-size:1.15rem}
+.fb .ans b{color:var(--sun)}
+.fb .why{background:var(--night);border-radius:12px;padding:10px 12px}
+.bonus{border:3px dashed var(--sun);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.bonus .say{font-size:1.3rem;font-weight:800;color:var(--sun)}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);margin-inline:-16px;padding:8px 16px;margin-bottom:10px;display:grid;gap:6px 12px;align-items:center;
+  grid-template-columns:auto 1fr auto auto;grid-template-areas:"world score hearts pause" "prog prog prog prog"}
+@media (min-width:640px){.hud{grid-template-columns:auto 1fr auto auto auto;grid-template-areas:"world prog score hearts pause"}}
+.hud-world{grid-area:world;font-family:var(--f-display);font-size:.95rem;color:var(--cyan);white-space:nowrap}
+.hud-score{grid-area:score;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.hearts{grid-area:hearts;font-size:1.35rem;letter-spacing:.05em;white-space:nowrap;color:var(--hot)}
+.hearts .lost{color:var(--night-2)}
+.hud .pause{grid-area:pause;min-height:48px;min-width:52px;padding:0 .6em}
+.prog{grid-area:prog;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.prog span{height:14px;border-radius:999px;background:var(--night-2);overflow:hidden;display:block}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--sun),var(--hot));transition:width .4s}
+
+/* Stage */
+.stage{position:relative;height:clamp(180px,36vw,290px);border-radius:20px;overflow:hidden;border:3px solid var(--cream);background:var(--night)}
+.stage.w1{background:linear-gradient(#3a1a8a 0%,#b23a9a 42%,#ff6a5c 72%,#ffc93c 100%)}
+.stage.w2{background:linear-gradient(#0d1b4d,#1c4a8a 55%,#2bb5a8)}
+.stage.w3{background:linear-gradient(#1a0b45,#5a2bb0 55%,#ff7aa8)}
+.stage.w4{background:linear-gradient(#070318,#1b0b4a 60%,#6a1a8a)}
+.stage.w0{background:linear-gradient(#0b0618,#2a1a4a)}
+.scene svg{position:absolute;inset:0;width:100%;height:100%}
+.fighter{position:absolute;bottom:3%}
+.fighter svg{width:100%;height:100%;display:block;overflow:visible}
+.hero{left:5%;height:58%;aspect-ratio:200/240}
+.boss{right:5%;height:66%;aspect-ratio:1}
+.boss svg{animation:float 3s ease-in-out infinite}
+.bossbar{position:absolute;top:8px;right:10px;left:10px;margin-left:auto;max-width:420px;background:var(--ink);border:2px solid var(--cream);border-radius:999px;padding:3px 12px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;font-size:.8rem;font-weight:800;white-space:nowrap}
+.bossbar .nm{font-family:var(--f-display);font-weight:400;font-size:.78rem;color:var(--sun)}
+.hp{height:12px;border-radius:999px;background:var(--night-2);overflow:hidden}
+.hp i{display:block;height:100%;background:linear-gradient(90deg,var(--bad),var(--orange));transition:width .5s}
+.fx{position:absolute;inset:0;pointer-events:none;opacity:0;background:repeating-conic-gradient(from 0deg at 76% 58%,var(--cream) 0 1.5deg,transparent 1.5deg 8deg);
+  -webkit-mask:radial-gradient(circle at 76% 58%,transparent 16%,#000 60%);mask:radial-gradient(circle at 76% 58%,transparent 16%,#000 60%)}
+.fx.left{background:repeating-conic-gradient(from 0deg at 18% 62%,var(--bad) 0 1.5deg,transparent 1.5deg 8deg);-webkit-mask:radial-gradient(circle at 18% 62%,transparent 14%,#000 60%);mask:radial-gradient(circle at 18% 62%,transparent 14%,#000 60%)}
+.fx.go{animation:flash .5s}
+.pop{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-6deg) scale(0);font-family:var(--f-display);font-size:clamp(1.6rem,7vw,2.8rem);color:var(--sun);text-shadow:3px 3px 0 var(--ink),-2px -2px 0 var(--ink),5px 5px 0 var(--hot);pointer-events:none;white-space:nowrap}
+.pop.go{animation:pop .8s}
+.hero.attack{animation:dash .45s}
+.boss.attack{animation:lunge .45s}
+.boss.hit svg{animation:hit .5s}
+.hero.hurt svg{animation:hurt .5s}
+.boss.dead svg{animation:die 1s forwards}
+.teaser{position:absolute;right:3%;bottom:3%;height:56%;display:flex;gap:1%;align-items:flex-end}
+.teaser svg{height:100%;aspect-ratio:1;filter:brightness(0) drop-shadow(0 0 5px var(--hot))}
+.teaser svg:nth-child(even){height:78%}
+@keyframes float{50%{transform:translateY(-6px)}}
+@keyframes dash{40%{transform:translateX(70%) rotate(8deg)}}
+@keyframes lunge{40%{transform:translateX(-55%) scale(1.08)}}
+@keyframes hit{20%{filter:brightness(3) saturate(0);transform:translateX(10px)}40%{transform:translateX(-8px)}60%{filter:brightness(2);transform:translateX(6px)}}
+@keyframes hurt{20%{filter:sepia(1) saturate(8) hue-rotate(-50deg);transform:translateX(-8px)}50%{transform:translateX(6px)}}
+@keyframes die{to{transform:translateY(30%) rotate(20deg) scale(.2);opacity:0;filter:brightness(3)}}
+@keyframes flash{30%{opacity:.85}100%{opacity:0}}
+@keyframes pop{20%{transform:translate(-50%,-50%) rotate(-6deg) scale(1.15)}70%{transform:translate(-50%,-50%) rotate(-6deg) scale(1)}100%{transform:translate(-50%,-60%) rotate(-6deg) scale(1);opacity:0}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Voice picker */
+.voice{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;margin-top:14px}
+.sel{min-height:48px;max-width:100%;font:inherit;font-weight:800;padding:.3em .7em;border-radius:12px;border:3px solid var(--cream);background:var(--ink);color:var(--cream)}
+.small{font-size:.9rem}
+
+/* Fighter select */
+.fighter-grid{display:grid;gap:16px}
+.stage.pick{height:clamp(210px,50vw,300px)}
+@media (min-width:760px){.fighter-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}.stage.pick{height:440px;position:sticky;top:12px}}
+.hero.big{left:50%;margin-left:0;transform:translateX(-50%);height:82%}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatch{width:48px;height:48px;border-radius:50%;border:3px solid var(--ink);box-shadow:0 0 0 2px var(--mute);padding:0;display:grid;place-items:center}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 4px var(--sun);transform:scale(1.1)}
+.swatch[aria-pressed="true"]::after{content:"✔";font-weight:800;color:var(--cream);text-shadow:0 0 3px var(--ink),0 0 3px var(--ink),0 0 3px var(--ink)}
+.kind{flex-direction:column;gap:2px;padding:8px;--sh:var(--cyan)}
+.kind svg{width:84px;height:100px}
+.kind[aria-pressed="true"]{background:var(--sun);--sh:var(--orange)}
+.nametag{position:absolute;left:5%;bottom:calc(61% + 4px);max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--ink);color:var(--cream);border:2px solid var(--cream);border-radius:999px;padding:0 9px;font-size:.75rem;font-weight:800}
+.pick .nametag{left:50%;transform:translateX(-50%);bottom:auto;top:10px;font-size:1rem;max-width:80%}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(21,10,48,.94);display:grid;place-items:center;padding:16px;overflow:auto}
+.overlay .panel{width:min(100%,460px)}
+
+/* Summary */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--night-2);border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.7rem;color:var(--sun);font-variant-numeric:tabular-nums}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.bar .hp{grid-column:1/-1}
+.bar .hp i{background:linear-gradient(90deg,var(--cyan),var(--good))}
+.mist{display:grid;gap:12px;padding:0;margin:0;list-style:none}
+.mist li{background:var(--ink);border-left:6px solid var(--bad);border-radius:10px;padding:12px;display:grid;gap:4px}
+.mist .q{font-weight:800}
+.mist .y{color:var(--bad)} .mist .c{color:var(--good)}
+.cols{display:grid;gap:16px}
+@media (min-width:700px){.cols{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" class="app"></div>
+
+<script>
+(() => {
+'use strict';
+/* ---------- ART: original characters drawn as inline SVG ---------- */
+const INK = '#150a30';
+const G = 'stroke="' + INK + '" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"';
+const svg = (vb, body) => '<svg viewBox="' + vb + '" aria-hidden="true" focusable="false">' + body + '</svg>';
+const eye = (x, y, flip) => '<ellipse cx="' + x + '" cy="' + y + '" rx="9" ry="12" fill="' + INK + '"/><ellipse cx="' + x + '" cy="' + (y + 2) + '" rx="6" ry="8" fill="#4fe3ea"/><circle cx="' + (x + (flip ? -3 : 3)) + '" cy="' + (y - 5) + '" r="3.5" fill="#fff"/><circle cx="' + (x + (flip ? 3 : -3)) + '" cy="' + (y + 6) + '" r="1.8" fill="#fff"/>';
+
+const ART = {
+  // The player's fighter. c = { kind, hair, skin, outfit, accent, weapon }
+  hero: c => {
+    c = c || S.hero;
+    const girl = c.kind === 'girl', H = c.hair, K = c.skin, O = c.outfit, A = c.accent;
+    const weapon = c.weapon === 'ruler'
+      ? '<rect x="142" y="24" width="16" height="118" fill="#fff4d2"/><path d="M150 38 h8 M150 54 h8 M150 70 h8 M150 86 h8 M150 102 h8 M150 118 h8" stroke-width="3"/><rect x="142" y="140" width="16" height="12" fill="' + A + '"/>'
+      : c.weapon === 'brush'
+        ? '<rect x="144" y="62" width="12" height="90" fill="#ff8a3c"/><rect x="141" y="46" width="18" height="18" fill="#c9bdf0"/><path d="M141 46 Q138 26 150 6 Q162 26 159 46Z" fill="' + A + '"/>'
+        : '<rect x="142" y="40" width="16" height="100" fill="#ffc93c"/><path d="M142 40 L150 16 L158 40Z" fill="#fff4d2"/><rect x="142" y="140" width="16" height="12" fill="' + A + '"/>';
+    return svg('0 0 200 240',
+      '<g ' + G + '>' +
+      (girl
+        ? '<path d="M100 18 Q152 12 164 62 Q178 106 170 158 L152 140 L148 166 L130 130 L100 124 L70 130 L52 166 L48 140 L30 158 Q22 106 36 62 Q48 12 100 18Z" fill="' + H + '"/>'
+        : '<path d="M52 70 L10 54 L26 74 L6 86 L52 86Z" fill="' + A + '"/>' +
+          '<path d="M100 22 L116 8 L122 28 L146 16 L144 40 L170 40 L156 60 L178 78 L158 88 L166 112 L142 106 L100 118 L58 106 L34 112 L42 88 L22 78 L44 60 L30 40 L56 40 L54 16 L78 28 L84 8Z" fill="' + H + '"/>') +
+      '<g transform="rotate(24 150 150)">' + weapon + '</g>' +
+      '<rect x="80" y="186" width="16" height="30" fill="' + K + '"/><rect x="104" y="186" width="16" height="30" fill="' + K + '"/>' +
+      '<path d="M72 212 H98 V230 H68 Q66 218 72 212Z" fill="' + A + '"/><path d="M102 212 H128 Q134 218 132 230 H102Z" fill="' + A + '"/>' +
+      (girl
+        ? '<path d="M70 174 H130 L142 204 H58Z" fill="#27318f"/><path d="M84 178 L78 204 M100 178 V204 M116 178 L122 204" stroke-width="3"/>'
+        : '<path d="M70 176 H130 L126 198 H102 L100 190 L98 198 H74Z" fill="#27318f"/>') +
+      '<path d="M72 134 Q100 122 128 134 L134 180 H66Z" fill="' + O + '"/><path d="M90 130 L100 150 L110 130" fill="#fff4d2"/>' +
+      '<path d="M74 138 Q50 156 62 180 L76 174 Q70 160 82 150Z" fill="' + O + '"/>' +
+      '<path d="M126 138 Q150 136 156 150 L146 160 Q138 150 122 154Z" fill="' + O + '"/><circle cx="153" cy="152" r="9" fill="' + K + '"/>' +
+      '<ellipse cx="100" cy="86" rx="44" ry="40" fill="' + K + '"/>' +
+      (girl
+        ? '<path d="M56 88 Q50 44 100 40 Q150 44 144 88 L136 68 L126 86 L114 64 L100 82 L86 64 L74 86 L64 68Z" fill="' + H + '"/>' +
+          '<path d="M56 80 Q44 106 58 130 L67 100Z" fill="' + H + '"/><path d="M144 80 Q156 106 142 130 L133 100Z" fill="' + H + '"/>' +
+          '<path d="M100 36 L70 18 L76 54Z" fill="' + A + '"/><path d="M100 36 L130 18 L124 54Z" fill="' + A + '"/><circle cx="100" cy="36" r="8" fill="' + A + '"/>'
+        : '<path d="M56 86 Q52 46 100 42 Q148 46 144 86 L132 64 L124 88 L112 62 L100 86 L88 62 L76 88 L68 64Z" fill="' + H + '"/>' +
+          '<path d="M56 60 Q100 44 144 60 L144 72 Q100 56 56 72Z" fill="' + A + '"/>') +
+      '</g>' +
+      (girl
+        ? '<path d="M40 82 q-3 22 4 40 M160 82 q3 22 -4 40" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/>'
+        : '<path d="M72 34 l8 7 l8 -7 l8 7 l8 -7 l8 7 l8 -7" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>') +
+      eye(82, 101, false) + eye(118, 101, true) +
+      (girl ? '<path d="M72 92 l-7 -4 M128 92 l7 -4" stroke="' + INK + '" stroke-width="3" stroke-linecap="round"/>' : '') +
+      '<path d="M70 84 L92 89 M130 84 L108 89" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>' +
+      '<path d="M92 114 Q100 123 108 114Z" fill="#b3274f" stroke="' + INK + '" stroke-width="3" stroke-linejoin="round"/>' +
+      '<ellipse cx="68" cy="110" rx="6" ry="3" fill="#ff8fa8"/><ellipse cx="132" cy="110" rx="6" ry="3" fill="#ff8fa8"/>');
+  },
+
+  // World 1 — KABAN, the Luggage Beast
+  boss1: () => svg('0 0 240 240',
+    '<path d="M84 62 V40 Q84 26 98 26 H142 Q156 26 156 40 V62" fill="none" stroke="' + INK + '" stroke-width="16" stroke-linecap="round"/>' +
+    '<path d="M84 62 V40 Q84 26 98 26 H142 Q156 26 156 40 V62" fill="none" stroke="#ffc93c" stroke-width="7" stroke-linecap="round"/>' +
+    '<g ' + G + '>' +
+    '<circle cx="70" cy="214" r="14" fill="#341a78"/><circle cx="170" cy="214" r="14" fill="#341a78"/>' +
+    '<circle cx="18" cy="150" r="13" fill="#19b8a6"/><circle cx="222" cy="150" r="13" fill="#19b8a6"/>' +
+    '<rect x="26" y="58" width="188" height="150" rx="26" fill="#19b8a6"/>' +
+    '<path d="M28 156 H212 V182 Q212 206 188 206 H52 Q28 206 28 182Z" fill="#0f8f86" stroke="none"/>' +
+    '<rect x="50" y="58" width="18" height="150" fill="#ff4f8b"/><rect x="172" y="58" width="18" height="150" fill="#ff4f8b"/>' +
+    '<path d="M74 148 Q120 134 166 148 L166 180 Q120 198 74 180Z" fill="' + INK + '"/>' +
+    '<path d="M156 50 Q200 46 208 78" fill="none"/><path d="M196 74 L224 80 L218 110 L190 104Z" fill="#ffc93c"/>' +
+    '</g>' +
+    '<path d="M76 149 L86 164 L96 146 L106 164 L116 145 L126 164 L136 146 L146 164 L156 147 L164 149 Q120 136 76 149Z" fill="#fff4d2"/>' +
+    '<ellipse cx="120" cy="182" rx="22" ry="8" fill="#ff4f8b"/>' +
+    '<path d="M72 96 L110 108 L106 128 Q88 132 74 120Z" fill="#fff"/><path d="M168 96 L130 108 L134 128 Q152 132 166 120Z" fill="#fff"/>' +
+    '<circle cx="95" cy="117" r="8" fill="#ff2d55"/><circle cx="145" cy="117" r="8" fill="#ff2d55"/><circle cx="95" cy="117" r="3" fill="' + INK + '"/><circle cx="145" cy="117" r="3" fill="' + INK + '"/>' +
+    '<path d="M66 86 L112 102 M174 86 L128 102" stroke="' + INK + '" stroke-width="9" stroke-linecap="round"/>'),
+
+  // World 2 — TOKEI, the Twin-Face Clock
+  boss2: () => svg('0 0 240 240',
+    '<g ' + G + '>' +
+    '<path d="M44 66 Q40 30 76 26 Q96 26 104 44Z" fill="#ff4f8b"/><path d="M196 66 Q200 30 164 26 Q144 26 136 44Z" fill="#ff4f8b"/>' +
+    '<path d="M120 16 V42"/><circle cx="120" cy="14" r="8" fill="#4fe3ea"/>' +
+    '<path d="M70 196 L52 228 H84Z" fill="#341a78"/><path d="M170 196 L188 228 H156Z" fill="#341a78"/>' +
+    '<circle cx="120" cy="128" r="88" fill="#ffc93c"/>' +
+    '<path d="M120 54 A74 74 0 0 0 120 202Z" fill="#fff4d2"/><path d="M120 54 A74 74 0 0 1 120 202Z" fill="#7b3ff2"/>' +
+    '<path d="M120 60 V70 M120 186 V196 M52 128 H62 M178 128 H188" stroke-width="4"/>' +
+    '<circle cx="88" cy="114" r="15" fill="#fff"/>' +
+    '<path d="M136 98 L174 106 L166 132 L140 128Z" fill="#fff"/>' +
+    '<path d="M72 92 Q88 84 104 92" fill="none"/><path d="M132 88 L178 98" stroke-width="8"/>' +
+    '<path d="M120 142 L100 124 M120 142 L144 112" stroke-width="6"/>' +
+    '<path d="M84 162 Q102 178 120 168 L130 156 L138 172 L146 156 L154 172 L162 154" fill="none"/>' +
+    '</g>' +
+    '<circle cx="90" cy="116" r="7" fill="' + INK + '"/><circle cx="93" cy="112" r="2.5" fill="#fff"/><circle cx="154" cy="117" r="5" fill="#ff2d55"/><circle cx="120" cy="142" r="7" fill="#ff4f8b" stroke="' + INK + '" stroke-width="4"/>' +
+    '<text x="62" y="152" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" fill="' + INK + '">-ed</text>' +
+    '<text x="158" y="150" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="#ffc93c">?!</text>'),
+
+  // World 3 — MITSU, the Three-Mask Spirit
+  boss3: () => {
+    const mask = (x, y, col, sym, mouth) => '<g transform="translate(' + x + ' ' + y + ')"><path d="M-30 -28 Q0 -40 30 -28 Q36 12 0 40 Q-36 12 -30 -28Z" fill="#fff4d2" ' + G + '/>' +
+      '<path d="M-28 -27 Q0 -38 28 -27 L27 -8 Q0 -18 -27 -8Z" fill="' + col + '"/>' +
+      '<text x="0" y="-12" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="20" fill="' + INK + '">' + sym + '</text>' +
+      '<path d="M-19 0 L-6 5 M19 0 L6 5" stroke="' + INK + '" stroke-width="5" stroke-linecap="round"/>' + mouth + '</g>';
+    const st = 'fill="none" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"';
+    return svg('0 0 240 240',
+      '<path d="M120 14 Q150 50 192 60 Q226 110 206 170 L224 228 L186 206 L164 234 L140 206 L120 236 L100 206 L76 234 L54 206 L16 228 L34 170 Q14 110 48 60 Q90 50 120 14Z" fill="#341a78" ' + G + '/>' +
+      '<path d="M120 60 Q146 84 172 92 Q190 130 178 170 L188 200 L160 186 L140 204 L120 184 L100 204 L80 186 L52 200 L62 170 Q50 130 68 92 Q94 84 120 60Z" fill="#5a2bd1"/>' +
+      mask(120, 74, '#4fe3ea', '?', '<circle cx="0" cy="20" r="5" ' + st + '/>') +
+      mask(64, 146, '#3ddc97', '+', '<path d="M-10 16 Q0 26 10 16" ' + st + '/>') +
+      mask(176, 146, '#ff6b7a', '−', '<path d="M-10 24 Q0 14 10 24" ' + st + '/>'));
+  },
+
+  // World 4 — NOIZU, the Message Phantom
+  boss4: () => svg('0 0 240 240',
+    '<g ' + G + '>' +
+    '<rect x="62" y="162" width="116" height="72" rx="12" fill="' + INK + '" stroke="#fff4d2"/>' +
+    '<rect x="74" y="174" width="92" height="48" rx="4" fill="#4fe3ea" stroke="none"/>' +
+    '<path d="M84 50 L92 22 L104 50 M110 50 L120 12 L130 50 M136 50 L148 22 L156 50" fill="#ffc93c"/>' +
+    '<path d="M64 112 L34 96 L44 116 L26 128 L64 138Z" fill="#ff4f8b"/><path d="M176 112 L206 96 L196 116 L214 128 L176 138Z" fill="#ff4f8b"/>' +
+    '<path d="M90 206 V152 H64 V72 H84 V48 H156 V72 H176 V152 H150 V206Z" fill="#ff4f8b"/>' +
+    '<path d="M94 130 L104 142 L114 130 L124 142 L134 130 L146 142 L146 152 H94Z" fill="' + INK + '"/>' +
+    '<rect x="8" y="26" width="52" height="32" rx="9" fill="#fff4d2"/><rect x="180" y="18" width="52" height="32" rx="9" fill="#fff4d2"/>' +
+    '</g>' +
+    '<rect x="50" y="98" width="62" height="9" fill="#4fe3ea"/><rect x="138" y="118" width="54" height="8" fill="#ffc93c"/><rect x="78" y="186" width="84" height="7" fill="#fff"/>' +
+    '<path d="M82 80 L112 90 L110 110 L86 106Z" fill="#fff"/><path d="M158 80 L128 90 L130 110 L154 106Z" fill="#fff"/>' +
+    '<rect x="98" y="92" width="8" height="12" fill="' + INK + '"/><rect x="134" y="92" width="8" height="12" fill="' + INK + '"/>' +
+    '<text x="34" y="49" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" fill="' + INK + '">#@!</text>' +
+    '<text x="206" y="41" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" fill="' + INK + '">?!?</text>'),
+
+  // Practice mode — KAGE, the Shadow of Mistakes
+  boss0: () => svg('0 0 240 240',
+    '<path d="M40 206 Q14 120 70 66 Q120 18 170 66 Q226 120 200 206 Q172 184 150 210 Q120 184 90 210 Q68 184 40 206Z" fill="#0b0618" stroke="#ff4f8b" stroke-width="5" stroke-linejoin="round"/>' +
+    '<path d="M72 104 L108 116 L104 134 L78 128Z" fill="#fff4d2"/><path d="M168 104 L132 116 L136 134 L162 128Z" fill="#fff4d2"/>' +
+    '<path d="M96 162 L108 152 L120 162 L132 152 L144 162" fill="none" stroke="#fff4d2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M108 60 l24 24 m0 -24 l-24 24" stroke="#ff6b7a" stroke-width="7" stroke-linecap="round"/>'),
+
+  scene: n => {
+    const b = [];
+    if (n === 1) {
+      b.push('<defs><mask id="sunm"><rect width="800" height="300" fill="#fff"/><rect y="196" width="800" height="5" fill="#000"/><rect y="214" width="800" height="8" fill="#000"/><rect y="234" width="800" height="11" fill="#000"/></mask></defs>');
+      b.push('<circle cx="400" cy="200" r="120" fill="#fff4d2" mask="url(#sunm)"/>');
+      b.push('<g fill="' + INK + '"><rect y="258" width="800" height="42"/><path d="M96 260 V150 H84 V124 H148 V150 H136 V260Z"/>' +
+        '<g transform="translate(560 70) rotate(-12)"><ellipse rx="62" ry="9"/><path d="M-6 0 L-30 36 L-14 36 L20 0Z"/><path d="M-6 0 L-26 -28 L-14 -28 L14 0Z"/><path d="M-60 0 L-72 -22 L-60 -22 L-44 0Z"/></g></g>');
+      b.push('<rect x="90" y="130" width="52" height="12" fill="#4fe3ea"/>');
+      for (let x = 20; x < 800; x += 60) b.push('<circle cx="' + x + '" cy="274" r="3" fill="#ffc93c"/>');
+    } else if (n === 2) {
+      for (let i = 0; i < 26; i++) b.push('<circle cx="' + ((i * 137) % 800) + '" cy="' + ((i * 53) % 150 + 8) + '" r="' + (1 + (i % 3) * .6) + '" fill="#fff4d2"/>');
+      b.push('<g fill="' + INK + '"><rect y="258" width="800" height="42"/><path d="M356 260 V112 L400 56 L444 112 V260Z"/><rect x="30" y="206" width="250" height="52" rx="12"/><rect x="560" y="186" width="200" height="74"/></g>');
+      b.push('<circle cx="400" cy="134" r="24" fill="#fff4d2"/><path d="M400 134 V118 M400 134 L412 140" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>');
+      for (let x = 46; x < 260; x += 44) b.push('<rect x="' + x + '" y="218" width="30" height="18" rx="4" fill="#ffc93c"/>');
+      b.push('<path d="M0 280 H800" stroke="#4fe3ea" stroke-width="3" stroke-dasharray="24 14"/>');
+    } else if (n === 3) {
+      b.push('<circle cx="640" cy="64" r="40" fill="#fff4d2"/>');
+      b.push('<path d="M-20 262 L150 96 L330 262Z" fill="#2c1670"/><path d="M210 262 L400 46 L590 262Z" fill="#3b1d8a"/><path d="M470 262 L650 108 L830 262Z" fill="#2c1670"/>');
+      b.push('<path d="M150 96 L126 120 L146 114 L156 126 L176 122Z M400 46 L370 80 L392 72 L404 88 L432 82Z M650 108 L626 128 L648 124 L658 136 L676 130Z" fill="#fff4d2"/>');
+      b.push('<rect y="258" width="800" height="42" fill="' + INK + '"/>');
+    } else if (n === 4) {
+      const cols = ['#4fe3ea', '#ffc93c', '#ff4f8b'];
+      for (let i = 0; i < 16; i++) {
+        const x = i * 52 - 10, h = 70 + ((i * 67) % 130);
+        b.push('<rect x="' + x + '" y="' + (262 - h) + '" width="46" height="' + h + '" fill="' + INK + '"/>');
+        for (let r = 0; r < Math.floor(h / 22) - 1; r++) for (let c = 0; c < 3; c++) if ((i + r * 3 + c) % 3 !== 0)
+          b.push('<rect x="' + (x + 7 + c * 12) + '" y="' + (270 - h + r * 22) + '" width="6" height="9" fill="' + cols[(i + r + c) % 3] + '"/>');
+      }
+      b.push('<rect y="260" width="800" height="40" fill="#0b0618"/>');
+      for (let x = -400; x <= 1200; x += 80) b.push('<path d="M400 260 L' + x + ' 300" stroke="#ff4f8b" stroke-width="2"/>');
+      b.push('<path d="M0 272 H800 M0 288 H800" stroke="#ff4f8b" stroke-width="2"/>');
+    } else {
+      for (let i = 0; i < 20; i++) b.push('<circle cx="' + ((i * 173) % 800) + '" cy="' + ((i * 71) % 220 + 10) + '" r="2" fill="#5a2bd1"/>');
+      b.push('<rect y="258" width="800" height="42" fill="#0b0618"/>');
+    }
+    return '<svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">' + b.join('') + '</svg>';
+  }
+};
+/* ---------- CONTENT: edit this block to match your unit ----------
+   Rule for every list of options: the FIRST option is the correct one (the game shuffles them).
+   Explanations come in pairs: English, then Spanish. */
+const CFG = { lives: 3, perLevel: [8, 8, 10, 10] };
+
+const mc = (prompt, options, en, es) => ({ type: 'mc', skill: 'reading', prompt, options, ex: [en, es] });
+const listen = (audio, question, options, en, es) => ({ type: 'listen', skill: 'listening', audio, question, options, ex: [en, es] });
+const write = (prompt, answers, en, es, hint) => ({ type: 'type', skill: 'writing', prompt, answers, hint, ex: [en, es] });
+const listenWrite = (audio, prompt, answers, en, es) => ({ type: 'type', skill: 'listening', audio, prompt, answers, ex: [en, es] });
+const order = (form, tiles, alts, ex) => ({ type: 'order', skill: 'writing', form, tiles, alts: alts || [], ex });
+
+/* WORLD 1 — Unit 4 "On holiday" chunks (go / stay / check in / get) and the ten Travel nouns */
+const W1 = {
+  gap: [
+    mc("Let's ___ sightseeing in the old town!", ['go', 'stay', 'get', 'check in'], 'The chunk is "go sightseeing": you visit the famous places of a city.', 'El chunk es "go sightseeing": visitar los lugares famosos de una ciudad.'),
+    mc('My brother wants to ___ backpacking around South America.', ['go', 'stay', 'get', 'check'], '"Go backpacking" = travel cheaply with a backpack.', '"Go backpacking" = viajar de mochilero.'),
+    mc('Next year we want to go ___ and visit another country.', ['abroad', 'sunburnt', 'online', 'lost'], '"Go abroad" = travel to another country. No preposition: go abroad.', '"Go abroad" = viajar al extranjero. Va sin preposición: go abroad.'),
+    mc('We always stay ___ a campsite near the lake.', ['at', 'to', 'of', 'by'], 'Stay AT a campsite (but IN a hotel or IN a hostel).', 'Stay AT a campsite (pero IN a hotel o IN a hostel).'),
+    mc('My grandparents usually stay ___ a hotel.', ['in', 'to', 'of', 'by'], 'Stay IN a hotel, IN a hostel, IN a camper van (but AT a campsite).', 'Stay IN a hotel, IN a hostel, IN a camper van (pero AT a campsite).'),
+    mc('Backpackers often stay ___ a hostel because it is cheap.', ['in', 'to', 'of', 'by'], 'Stay IN a hostel: a cheap place where travellers share rooms.', 'Stay IN a hostel: un lugar barato donde los viajeros comparten habitación.'),
+    mc('My uncle sleeps in his vehicle on holiday. He stays in a ___.', ['camper van', 'hostel', 'campsite', 'hotel'], 'A camper van is a vehicle with beds. You stay IN a camper van.', 'Una "camper van" es un vehículo con camas. Se dice stay IN a camper van.'),
+    mc('You have to check in ___ the airport two hours before the flight.', ['at', 'to', 'of', 'by'], 'Check in AT the airport (but check in TO a hotel).', 'Check in AT the airport (pero check in TO a hotel).'),
+    mc('When you arrive, you check in ___ the hotel at reception.', ['to', 'of', 'by', 'on'], 'Check in TO a hotel (but check in AT the airport).', 'Check in TO a hotel (pero check in AT the airport).'),
+    mc('You can check in ___ on your phone the day before the flight.', ['online', 'abroad', 'lost', 'seasick'], '"Check in online" = on the internet, before you go to the airport.', '"Check in online" = por internet, antes de ir al aeropuerto.'),
+    mc('Put on sun cream or you will get ___!', ['sunburnt', 'seasick', 'lost', 'abroad'], '"Get sunburnt" = your skin goes red because of too much sun.', '"Get sunburnt" = quemarse con el sol.'),
+    mc('I always get ___ on boats. I feel terrible!', ['seasick', 'sunburnt', 'lost', 'online'], '"Get seasick" = feel sick on a boat.', '"Get seasick" = marearse en un barco.'),
+    mc("Take a map and you won't get ___ in the city.", ['lost', 'sunburnt', 'seasick', 'abroad'], '"Get lost" = you don\'t know where you are.', '"Get lost" = perderse: no saber dónde estás.'),
+    mc("I don't want to ___ sunburnt. I always wear a hat.", ['get', 'go', 'stay', 'check'], 'Sunburnt, seasick and lost all go with "get".', 'Sunburnt, seasick y lost van con "get".')
+  ],
+  ctx: [
+    mc('You are in Rome and you want to see the famous places. What do you do?', ['go sightseeing', 'get seasick', 'check in online', 'stay in a hostel'], '"Go sightseeing" = visit the famous places of a city.', '"Go sightseeing" = recorrer los lugares famosos de una ciudad.'),
+    mc('You travel for weeks with one rucksack and very little money. What do you do?', ['go backpacking', 'check in to a hotel', 'get sunburnt', 'stay in a camper van'], '"Go backpacking" = travel cheaply, carrying everything in a backpack.', '"Go backpacking" = viajar barato, con todo en una mochila.'),
+    mc('You spend six hours on the beach with no sun cream. What happens?', ['You get sunburnt.', 'You get seasick.', 'You go abroad.', 'You check in online.'], 'Too much sun = you get sunburnt.', 'Demasiado sol = "you get sunburnt" (te quemas).'),
+    mc('You are in a new city with no map and no phone. What can happen?', ['You get lost.', 'You get sunburnt.', 'You go sightseeing.', 'You check in.'], 'With no map, it is easy to get lost.', 'Sin mapa es fácil "get lost" (perderse).'),
+    mc('Your family sleeps in tents on holiday. Where do you stay?', ['at a campsite', 'in a hotel', 'in a hostel', 'in a camper van'], 'Tents go with a campsite: stay AT a campsite.', 'Las carpas van con un camping: stay AT a campsite.'),
+    mc('You arrive at the airport with your bags. What do you do first?', ['check in', 'get lost', 'go sightseeing', 'stay at a campsite'], 'At the airport, first you check in: you show your ticket and leave your baggage.', 'En el aeropuerto primero haces "check in": muestras tu pasaje y entregas tu equipaje.')
+  ],
+  nouns: [
+    mc('An official document or stamp you need to enter some countries.', ['a visa', 'a border', 'a currency', 'a destination'], 'A visa lets you enter a country. "Do you need a visa for…?"', 'La "visa" te permite entrar a un país. "Do you need a visa for…?"'),
+    mc('The line between two countries.', ['the border', 'the visa', 'the destination', 'the sights'], 'You cross the border when you go from one country to another.', 'Cruzas la "border" (frontera) al pasar de un país a otro.'),
+    mc('The money of a country, like euros or pesos.', ['currency', 'baggage', 'facilities', 'equipment'], 'Currency = the money a country uses. "What\'s the currency in…?"', '"Currency" = la moneda de un país. "What\'s the currency in…?"'),
+    mc('The place you are travelling to.', ['your destination', 'your baggage', 'your visa', 'your currency'], 'Your destination is where your journey ends.', 'Tu "destination" (destino) es donde termina tu viaje.'),
+    mc('All the bags and suitcases you take on a trip.', ['baggage', 'equipment', 'facilities', 'sights'], 'Baggage = your bags and suitcases.', '"Baggage" = tu equipaje: bolsos y maletas.'),
+    mc('The things you need for an activity, like a tent and a sleeping bag for camping.', ['equipment', 'currency', 'sights', 'border'], 'Equipment = the things you need to do an activity.', '"Equipment" = el equipo que necesitas para una actividad.'),
+    mc('Things like toilets, showers and a swimming pool at a campsite or hotel.', ['facilities', 'baggage', 'sights', 'visa'], 'Facilities = the services and rooms a place offers.', '"Facilities" = las instalaciones y servicios que ofrece un lugar.'),
+    mc('The famous and interesting places tourists visit in a city.', ['the sights', 'the facilities', 'the border', 'the baggage'], 'The sights = the places you visit when you go sightseeing.', '"The sights" = los lugares que visitas cuando haces "sightseeing".'),
+    mc('The time of year when most tourists travel and prices are high.', ['high season', 'low season', 'destination', 'currency'], 'High season = lots of tourists and high prices.', '"High season" = temporada alta: muchos turistas y precios altos.'),
+    mc('The time of year with few tourists and cheaper prices.', ['low season', 'high season', 'border', 'baggage'], 'Low season = few tourists and low prices.', '"Low season" = temporada baja: pocos turistas y precios bajos.'),
+    mc('"What\'s the ___ in Japan?" — "It\'s the yen."', ['currency', 'destination', 'equipment', 'border'], 'The yen is money, so the question is about the currency.', 'El yen es dinero: se pregunta por la "currency" (moneda).'),
+    mc('We showed our passports at the ___ between Chile and Argentina.', ['border', 'currency', 'sights', 'equipment'], 'The border is the line between two countries.', 'La "border" es la frontera entre dos países.'),
+    mc('Hotels are cheaper in the ___ because there are fewer tourists.', ['low season', 'high season', 'baggage', 'visa'], 'Fewer tourists and cheaper prices = low season.', 'Menos turistas y precios más bajos = "low season".')
+  ],
+  listen: [
+    listen('We never stay in a hotel. We always stay at a campsite near the beach.', 'Where does the family stay?', ['at a campsite', 'in a hotel', 'in a hostel', 'in a camper van'], 'They NEVER stay in a hotel. They "stay at a campsite".', 'NUNCA se quedan en un hotel. Ellos "stay at a campsite".'),
+    listen('My sister loves going abroad. This year she wants to go backpacking in Asia.', 'What does she want to do this year?', ['go backpacking', 'go sightseeing', 'stay in a hotel', 'check in online'], 'She says "go backpacking in Asia".', 'Dice "go backpacking in Asia".'),
+    listen("I don't like boats because I always get seasick.", 'What is the problem on boats?', ['getting seasick', 'getting sunburnt', 'getting lost', 'going abroad'], 'The speaker says "I always get seasick".', 'La persona dice "I always get seasick".'),
+    listen("You don't have to wait at the airport. You can check in online.", 'How can you check in?', ['online', 'at a hotel', 'at a campsite', 'at the border'], 'The speaker says "you can check in online".', 'La persona dice "you can check in online".'),
+    listen("What's the currency in Chile? It's the peso.", 'What are they talking about?', ['the currency', 'the border', 'the visa', 'the sights'], 'The peso is money. They are talking about the currency.', 'El peso es dinero. Hablan de la "currency" (moneda).')
+  ],
+  write: [
+    listenWrite('We always go sightseeing on the first day.', 'We always go ___ on the first day.', ['sightseeing'], 'The chunk is "go sightseeing".', 'El chunk es "go sightseeing".'),
+    listenWrite("Don't forget your baggage!", "Don't forget your ___!", ['baggage'], 'Baggage = your bags and suitcases.', '"Baggage" = tu equipaje.'),
+    write('Complete the chunk: go ___ (travel to another country) 🌍', ['abroad'], 'The chunk is "go abroad".', 'El chunk es "go abroad".'),
+    write('Complete the chunk: stay ___ a campsite ⛺', ['at'], 'Stay AT a campsite.', 'Stay AT a campsite.'),
+    write('Complete the chunk: stay ___ a hostel 🛏️', ['in', 'at'], 'In this unit: stay IN a hostel, IN a hotel, IN a camper van.', 'En esta unidad: stay IN a hostel, IN a hotel, IN a camper van.'),
+    write('Complete the chunk: get ___ (red skin from the sun) ☀️', ['sunburnt', 'sunburned'], 'The chunk is "get sunburnt".', 'El chunk es "get sunburnt".'),
+    write('Complete the chunk: get ___ (feel sick on a boat) 🚢', ['seasick', 'sea sick'], 'The chunk is "get seasick".', 'El chunk es "get seasick".'),
+    write('Complete the chunk: check ___ at the airport ✈️', ['in'], 'The chunk is "check in at the airport".', 'El chunk es "check in at the airport".')
+  ]
+};
+
+/* WORLD 2 — regular or irregular? [base, past, rule, wrong1, wrong2, wrong3] */
+const VERBS = [
+  ['stay', 'stayed', 'yed', 'staied', 'stayd', 'stay'], ['check', 'checked', 'ed', 'checkt', 'checkked', 'check'],
+  ['visit', 'visited', 'ed', 'visitted', 'visitied', 'visit'], ['pack', 'packed', 'ed', 'packt', 'packked', 'pack'],
+  ['walk', 'walked', 'ed', 'walkt', 'walkked', 'walk'], ['miss', 'missed', 'ed', 'misst', 'missd', 'miss'],
+  ['book', 'booked', 'ed', 'bookt', 'bookked', 'book'], ['wait', 'waited', 'ed', 'waitted', 'waitd', 'wait'],
+  ['happen', 'happened', 'ed', 'happend', 'happenned', 'happen'], ['look', 'looked', 'ed', 'lookt', 'lookked', 'look'],
+  ['play', 'played', 'yed', 'plaied', 'playd', 'play'], ['enjoy', 'enjoyed', 'yed', 'enjoied', 'enjoyd', 'enjoy'],
+  ['arrive', 'arrived', 'd', 'arriveed', 'arrivd', 'arrove'], ['close', 'closed', 'd', 'closeed', 'closd', 'close'],
+  ['carry', 'carried', 'ied', 'carryed', 'carred', 'carry'], ['try', 'tried', 'ied', 'tryed', 'tryied', 'try'],
+  ['hurry', 'hurried', 'ied', 'hurryed', 'hurred', 'hurry'], ['stop', 'stopped', 'double', 'stoped', 'stopt', 'stop'],
+  ['plan', 'planned', 'double', 'planed', 'plant', 'plan'],
+  ['go', 'went', 'irr', 'goed', 'gone', 'wented'], ['get', 'got', 'irr', 'getted', 'gotted', 'gets'],
+  ['take', 'took', 'irr', 'taked', 'taken', 'tooked'], ['fly', 'flew', 'irr', 'flied', 'flown', 'flyed'],
+  ['lose', 'lost', 'irr', 'losed', 'losted', 'loses'], ['leave', 'left', 'irr', 'leaved', 'lefted', 'leaves'],
+  ['buy', 'bought', 'irr', 'buyed', 'buied', 'boughted'], ['see', 'saw', 'irr', 'seed', 'seen', 'sawed'],
+  ['have', 'had', 'irr', 'haved', 'has', 'hadded'], ['find', 'found', 'irr', 'finded', 'founded', 'finds'],
+  ['meet', 'met', 'irr', 'meeted', 'meted', 'meets'], ['send', 'sent', 'irr', 'sended', 'sented', 'sends'],
+  ['sleep', 'slept', 'irr', 'sleeped', 'sleept', 'slepted'], ['write', 'wrote', 'irr', 'writed', 'written', 'wroted'],
+  ['come', 'came', 'irr', 'comed', 'camed', 'comes'], ['make', 'made', 'irr', 'maked', 'maded', 'makes'],
+  ['eat', 'ate', 'irr', 'eated', 'eaten', 'ated'], ['say', 'said', 'irr', 'sayed', 'sed', 'says'],
+  ['swim', 'swam', 'irr', 'swimmed', 'swum', 'swimed']
+];
+const RULES = {
+  ed: (v, p) => ['"' + v + '" is a regular verb: add -ed → ' + p + '.', '"' + v + '" es un verbo regular: se agrega -ed → ' + p + '.'],
+  yed: (v, p) => ['"' + v + '" is regular. Vowel + y: just add -ed → ' + p + ' (the y does not change).', '"' + v + '" es regular. Vocal + y: solo se agrega -ed → ' + p + ' (la y no cambia).'],
+  d: (v, p) => ['"' + v + '" is regular and ends in -e: add only -d → ' + p + '.', '"' + v + '" es regular y termina en -e: solo se agrega -d → ' + p + '.'],
+  ied: (v, p) => ['"' + v + '" is regular. Consonant + y: change y to i and add -ed → ' + p + '.', '"' + v + '" es regular. Consonante + y: cambia la y por i y agrega -ed → ' + p + '.'],
+  double: (v, p) => ['"' + v + '" is regular. Short verb (consonant-vowel-consonant): double the last letter and add -ed → ' + p + '.', '"' + v + '" es regular. Verbo corto (consonante-vocal-consonante): duplica la última letra y agrega -ed → ' + p + '.'],
+  irr: (v, p) => ['"' + v + '" is an irregular verb. It does NOT take -ed. Remember it: ' + v + ' → ' + p + '.', '"' + v + '" es un verbo irregular. NO lleva -ed. Hay que memorizarlo: ' + v + ' → ' + p + '.']
+};
+const verbOf = b => VERBS.find(v => v[0] === b);
+const verbEx = b => { const v = verbOf(b); return RULES[v[2]](v[0], v[1]); };
+const EX_BE = ['The past of "be" has two forms: I / he / she / it WAS, and you / we / they WERE.', 'El pasado de "be" tiene dos formas: I / he / she / it WAS, y you / we / they WERE.'];
+// [sentence, base verb, wrong options] — "be" lines also give the correct form and its explanation
+const W2_SENT = [
+  ['That morning, we ___ to the airport by taxi.', 'go', ['goed', 'go', 'gone']],
+  ['She ___ a lot of photos of the sights last summer.', 'take', ['taked', 'taken', 'takes']],
+  ['We ___ at a campsite near the lake last weekend.', 'stay', ['staied', 'stay', 'staying']],
+  ['They ___ in online the night before the flight.', 'check', ['checkt', 'check', 'checking']],
+  ['I ___ seasick on the boat two days ago.', 'get', ['getted', 'get', 'gotten']],
+  ['My dad ___ his passport at the airport last year!', 'lose', ['losed', 'lose', 'losted']],
+  ['The plane ___ an hour later.', 'leave', ['leaved', 'leave', 'lefted']],
+  ['We ___ to Madrid three years ago.', 'fly', ['flied', 'fly', 'flown']],
+  ['They ___ all the sights on Monday.', 'visit', ['visitted', 'visit', 'visiting']],
+  ['I ___ my backpack the night before.', 'pack', ['packt', 'pack', 'packing']],
+  ['The airport ___ very busy that morning.', 'be', ['were', 'did', 'be'], 'was', EX_BE[0], EX_BE[1]],
+  ['We ___ late for the flight, and we ran to the gate.', 'be', ['was', 'did', 'are'], 'were', EX_BE[0], EX_BE[1]]
+];
+// [audio, base verb heard, wrong base verbs]
+const W2_LISTEN = [
+  ['We flew to Madrid in July.', 'fly', ['feel', 'fall', 'find']],
+  ['She bought a blue hat at the market.', 'buy', ['bring', 'build', 'be']],
+  ['They took the bus to the airport.', 'take', ['talk', 'tell', 'teach']],
+  ['I saw the sights from the top of the tower.', 'see', ['say', 'sit', 'sing']],
+  ['We stayed in a small hostel.', 'stay', ['start', 'study', 'stop']],
+  ['We got lost in the old town.', 'get', ['go', 'give', 'grow']],
+  ['The bus left at six o\'clock.', 'leave', ['live', 'lift', 'let']],
+  ['She lost her baggage at the airport.', 'lose', ['leave', 'lend', 'listen']]
+];
+
+/* WORLD 3 — affirmative (aff), negative (neg), question with did (que), subject question without did (subj) */
+const EX3 = {
+  aff: ['Affirmative: subject + verb in the PAST form.', 'Afirmativa: sujeto + verbo en PASADO.'],
+  neg: ["Negative: subject + didn't + BASE form. The verb does not change.", "Negativa: sujeto + didn't + verbo en forma BASE. El verbo no cambia."],
+  que: ['Question: Did + subject + BASE form? "Did" already shows the past.', 'Pregunta: Did + sujeto + verbo en forma BASE? "Did" ya indica el pasado.'],
+  subj: ['The question asks about the SUBJECT (Who…? / What…?): no "did". The verb stays in the past form.', 'La pregunta es sobre el SUJETO (Who…? / What…?): va sin "did". El verbo queda en pasado.']
+};
+const W3_COMPLETE = {
+  aff: [
+    write('We ___ sightseeing in Rome yesterday.', ['went'], 'Affirmative: use the past form. "Go" is irregular → went.', 'Afirmativa: usa el pasado. "Go" es irregular → went.', 'go'),
+    mc('It was very sunny, and we ___ sunburnt at the beach.', ['got', 'get', 'getted', "didn't got"], 'Affirmative: use the past form. "Get" is irregular → got.', 'Afirmativa: usa el pasado. "Get" es irregular → got.'),
+    write('Last year we ___ in a hostel near the station.', ['stayed'], 'Affirmative: use the past form. "Stay" is regular → stayed.', 'Afirmativa: usa el pasado. "Stay" es regular → stayed.', 'stay'),
+    mc('She ___ to London two days ago.', ['flew', 'flied', 'fly', "didn't flew"], 'Affirmative: use the past form. "Fly" is irregular → flew.', 'Afirmativa: usa el pasado. "Fly" es irregular → flew.'),
+    mc('They ___ at the airport an hour later.', ['checked in', 'check in', 'checkt in', "didn't checked in"], 'Affirmative: use the past form. "Check" is regular → checked in.', 'Afirmativa: usa el pasado. "Check" es regular → checked in.')
+  ],
+  neg: [
+    mc("We didn't ___ in a hotel. We stayed at a campsite.", ['stay', 'stayed', 'stays', 'staying'], "After didn't, use the BASE form: didn't stay.", "Después de didn't va la forma BASE: didn't stay."),
+    mc('I ___ get seasick because the sea was calm.', ["didn't", "don't", "wasn't", 'not'], "Past simple negative uses didn't for all persons: I didn't get seasick.", "El negativo en pasado simple usa didn't con todas las personas: I didn't get seasick."),
+    write('They ___ abroad last year.', ["didn't go", 'did not go'], "Negative: didn't + base form → didn't go (not didn't went).", "Negativa: didn't + forma base → didn't go (no didn't went).", 'not / go'),
+    write('"He lost his baggage." Make it negative: He ___ his baggage.', ["didn't lose", 'did not lose'], "Negative: didn't + base form. lost → didn't lose.", "Negativa: didn't + forma base. lost → didn't lose."),
+    mc("She didn't ___ her visa. It was in her bag!", ['lose', 'lost', 'losed', 'loses'], "After didn't, use the BASE form: didn't lose.", "Después de didn't va la forma BASE: didn't lose.")
+  ],
+  que: [
+    mc('___ you go backpacking last summer?', ['Did', 'Do', 'Were', 'Does'], 'Past simple questions start with Did: Did + subject + base form?', 'Las preguntas en pasado simple empiezan con Did: Did + sujeto + forma base?'),
+    mc('Did they ___ in a hostel?', ['stay', 'stayed', 'staying', 'stays'], 'After Did, use the BASE form: Did they stay…? (not stayed).', 'Después de Did va la forma BASE: Did they stay…? (no stayed).'),
+    mc('Where ___ you go on holiday?', ['did', 'do', 'were', 'are'], 'Wh- question in the past: Where + did + subject + base form?', 'Pregunta con Wh- en pasado: Where + did + sujeto + forma base?'),
+    mc('"Did you get lost?" — "Yes, we ___."', ['did', 'got', 'do', 'were'], "Short answers use did / didn't: Yes, we did. / No, we didn't.", "Las respuestas cortas usan did / didn't: Yes, we did. / No, we didn't."),
+    write('"She flew to Paris." Make a question: Did she ___ to Paris?', ['fly'], '"Did" shows the past, and the verb goes back to the base form: flew → fly.', '"Did" ya indica el pasado y el verbo vuelve a la forma base: flew → fly.')
+  ],
+  subj: [
+    mc('Who ___ the bag?', ['took', 'did take', 'did took', 'take'], EX3.subj[0] + ' → Who took the bag?', EX3.subj[1] + ' → Who took the bag?'),
+    mc('What ___ at the gate?', ['happened', 'did happen', 'did happened', 'happen'], EX3.subj[0] + ' → What happened at the gate?', EX3.subj[1] + ' → What happened at the gate?'),
+    mc('Who ___ the tickets?', ['bought', 'did buy', 'did bought', 'buy'], EX3.subj[0] + ' → Who bought the tickets?', EX3.subj[1] + ' → Who bought the tickets?'),
+    mc('The answer is "My dad lost the passports." What is the question?', ['Who lost the passports?', 'Who did lose the passports?', 'Who did lost the passports?', 'Who lose the passports?'], EX3.subj[0], EX3.subj[1]),
+    write('"Emma lost her passport." Ask about WHO: Who ___ her passport?', ['lost'], EX3.subj[0] + ' → Who lost her passport?', EX3.subj[1] + ' → Who lost her passport?'),
+    write('"Emma lost her passport at the gate." Ask about WHERE: Where did Emma ___ her passport?', ['lose'], 'This question asks about the place, not the subject: Where + did + subject + BASE form.', 'Esta pregunta es sobre el lugar, no sobre el sujeto: Where + did + sujeto + forma BASE.')
+  ]
+};
+const W3_ORDER = {
+  aff: [order('aff', ['we', 'went', 'sightseeing', 'in', 'Rome'], ['in Rome we went sightseeing']), order('aff', ['my', 'family', 'stayed', 'at', 'a', 'campsite']), order('aff', ['I', 'got', 'sunburnt', 'at', 'the', 'beach'], ['at the beach I got sunburnt'])],
+  neg: [order('neg', ['I', "didn't", 'get', 'seasick', 'on the boat'], ["on the boat I didn't get seasick"]), order('neg', ['they', "didn't", 'stay', 'in', 'a', 'hotel']), order('neg', ['she', "didn't", 'lose', 'her', 'passport'])],
+  que: [order('que', ['did', 'you', 'stay', 'in', 'a', 'hostel']), order('que', ['where', 'did', 'they', 'go', 'last summer'], ['last summer where did they go']), order('que', ['did', 'he', 'check in', 'online']),
+    order('que', ['who', 'took', 'my', 'backpack'], [], EX3.subj), order('que', ['what', 'happened', 'at', 'the', 'gate'], [], EX3.subj)]
+};
+// Sentence builder: verbs = [base, past, wrong past], ends = {ending: base verb it goes with}
+const W3_BUILD = [
+  { subj: ['I', 'we', 'my family'], qsubj: ['you', 'they', 'your family'], verbs: [['go', 'went', 'goed'], ['stay', 'stayed', 'staied'], ['get', 'got', 'getted']], ends: { 'sightseeing': 'go', 'backpacking': 'go', 'in a hostel': 'stay', 'at a campsite': 'stay', 'sunburnt': 'get', 'seasick': 'get' } },
+  { subj: ['she', 'he', 'my cousins'], qsubj: ['she', 'he', 'your cousins'], verbs: [['fly', 'flew', 'flied'], ['visit', 'visited', 'visitted'], ['lose', 'lost', 'losed']], ends: { 'to London': 'fly', 'to Peru': 'fly', 'the sights': 'visit', 'a museum': 'visit', 'the passports': 'lose', 'the tickets': 'lose' } },
+  { subj: ['we', 'my parents', 'I'], qsubj: ['you', 'your parents', 'he'], verbs: [['go', 'went', 'goed'], ['visit', 'visited', 'visitted'], ['stay', 'stayed', 'staied']], ends: { 'sightseeing': 'go', 'backpacking': 'go', 'the sights': 'visit', 'a museum': 'visit', 'in a hostel': 'stay', 'at a campsite': 'stay' } }
+];
+
+/* WORLD 4 — text messages. Plain lines are shown as they are; lines with q are the challenges.
+   Conjunctions from the unit: and, but, because, although, so that. */
+const EX4 = {
+  and: ['"And" adds another idea of the same kind.', '"And" agrega otra idea del mismo tipo.'],
+  but: ['"But" shows a contrast. It goes between the two ideas.', '"But" muestra un contraste. Va entre las dos ideas.'],
+  because: ['"Because" gives the reason. It answers "Why?".', '"Because" entrega la razón. Responde a "¿Por qué?".'],
+  although: ['"Although" shows a contrast and can start the sentence: Although + surprising fact, + result. "But" cannot go there.', '"Although" muestra un contraste y puede ir al inicio: Although + hecho sorprendente, + resultado. "But" no puede ir ahí.'],
+  sothat: ['"So that" gives the purpose (what for?). After it: subject + can / could / will.', '"So that" entrega el propósito (¿para qué?). Después va: sujeto + can / could / will.']
+};
+const CHATS = [
+  [
+    { who: 'Emi', text: "Hi Leo! I'm back from my holiday! 🏖️" },
+    { who: 'Leo', q: mc('Hi Emi! Where ___ you go?', ['did', 'do', 'were', 'does'], 'Past question: Wh- word + did + subject + base form → Where did you go?', 'Pregunta en pasado: Wh- + did + sujeto + forma base → Where did you go?') },
+    { who: 'Emi', q: write('I ___ abroad with my family. We flew to Spain! ✈️', ['went'], '"Go" is irregular: go → went. The chunk is "go abroad".', '"Go" es irregular: go → went. El chunk es "go abroad".', 'go') },
+    { who: 'Leo', text: 'Cool! Did you stay in a hotel?' },
+    { who: 'Emi', text: "No, we didn't. We stayed at a campsite. ⛺" },
+    { who: 'Emi', q: mc('We chose it ___ it was cheap in the low season.', ['because', 'so that', 'although', 'but'], EX4.because[0], EX4.because[1]) },
+    { who: 'Leo', text: 'Nice! What did you do there?' },
+    { who: 'Emi', q: mc('We went sightseeing ___ we took lots of photos. 📸', ['and', 'but', 'because', 'so that'], EX4.and[0], EX4.and[1]) },
+    { who: 'Emi', q: mc('___ I used sun cream, I got sunburnt! 🥵', ['Although', 'But', 'Because', 'So that'], EX4.although[0], EX4.although[1]) },
+    { who: 'Leo', q: mc('Oh no! Did you ___ seasick on the boat trip?', ['get', 'got', 'getted', 'gets'], 'After Did, use the BASE form: Did you get…?', 'Después de Did va la forma BASE: Did you get…?') },
+    { who: 'Emi', q: write("No, I didn't! But my dad ___ his passport at the border. 😱", ['lost'], '"Lose" is irregular: lose → lost.', '"Lose" es irregular: lose → lost.', 'lose') },
+    { who: 'Leo', q: listen('Oh no! What happened? Who found the passport?', 'What does Leo want to know?', ['who found the passport', 'who lost the passport', 'where they stayed', 'what the currency was'], 'Leo asks "Who found the passport?" It is a subject question: no "did".', 'Leo pregunta "Who found the passport?" Es una pregunta de sujeto: sin "did".') },
+    { who: 'Emi', text: 'A police officer found it an hour later. Phew!' },
+    { who: 'Emi', q: mc("I'm sending you my photos ___ you can see the sights!", ['so that', 'because', 'although', 'but'], EX4.sothat[0], EX4.sothat[1]) },
+    { who: 'Leo', q: order('que', ['did', 'you', 'have', 'a good time', 'in Spain']) },
+    { who: 'Emi', text: 'Yes! It was the best holiday ever! 🌟' }
+  ],
+  [
+    { who: 'Emi', text: 'Hey Leo! How was your trip?' },
+    { who: 'Leo', q: mc('Amazing! We ___ backpacking in the mountains! 🎒', ['went', 'go', 'goed', 'gone'], '"Go" is irregular: go → went. The chunk is "go backpacking".', '"Go" es irregular: go → went. El chunk es "go backpacking".') },
+    { who: 'Emi', text: 'Wow! Did you stay in a hostel?' },
+    { who: 'Leo', q: mc("Yes, we did. But I ___ sleep very well. It was so noisy!", ["didn't", "don't", "wasn't", 'not'], "Past simple negative: didn't + base form → I didn't sleep.", "Negativo en pasado simple: didn't + forma base → I didn't sleep.") },
+    { who: 'Emi', text: 'Oh no! What happened on the first day?' },
+    { who: 'Leo', q: write('We ___ lost in the forest! 🧭', ['got'], '"Get" is irregular: get → got. The chunk is "get lost".', '"Get" es irregular: get → got. El chunk es "get lost".', 'get') },
+    { who: 'Leo', q: mc('We had a map, ___ it was very old. 😅', ['but', 'because', 'so that'], EX4.but[0], EX4.but[1]) },
+    { who: 'Leo', q: mc('___ we were tired, we walked for six hours. 🥾', ['Although', 'But', 'Because', 'So that'], EX4.although[0], EX4.although[1]) },
+    { who: 'Emi', text: 'Six hours! And the next day?' },
+    { who: 'Leo', q: mc('We left early ___ we could see the sunrise. 🌄', ['so that', 'because', 'although', 'but'], EX4.sothat[0], EX4.sothat[1]) },
+    { who: 'Emi', q: listen('That sounds fun! Did you take any photos of the sights?', 'What does Emi ask about?', ['taking photos', 'the currency', 'staying in a hostel', 'going abroad'], 'Emi asks "Did you take any photos of the sights?"', 'Emi pregunta "Did you take any photos of the sights?"') },
+    { who: 'Leo', q: write('Yes! I ___ lots of photos. 📸', ['took'], '"Take" is irregular: take → took.', '"Take" es irregular: take → took.', 'take') },
+    { who: 'Emi', q: order('neg', ['I', "didn't", 'go', 'anywhere', 'this weekend'], ["this weekend I didn't go anywhere"]) },
+    { who: 'Emi', q: mc('I stayed at home ___ I was sick. 🤒', ['because', 'so that', 'although', 'but'], EX4.because[0], EX4.because[1]) },
+    { who: 'Leo', text: 'Poor you! Next time, come with us!' }
+  ]
+];
+
+const WORLDS = [
+  { name: 'Sunset Airport', boss: 'KABAN', title: ['the Luggage Beast', 'la Bestia Equipaje'], taunt: 'Grrr! I eat holiday words for breakfast!',
+    mission: ['Remember the On holiday chunks and the Travel nouns, and use them in the right situation.', 'Recuerda los chunks de On holiday y los Travel nouns, y úsalos en la situación correcta.'] },
+  { name: 'Clock Tower Station', boss: 'TOKEI', title: ['the Twin-Face Clock', 'el Reloj de Dos Caras'], taunt: 'Tick-tock! Regular or irregular? You will never know!',
+    mission: ['Decide if each verb is regular or irregular. Then choose its past form.', 'Decide si cada verbo es regular o irregular. Luego elige su forma en pasado.'] },
+  { name: 'Three-Mask Mountain', boss: 'MITSU', title: ['the Three-Mask Spirit', 'el Espíritu de Tres Máscaras'], taunt: 'Plus, minus, question… Three masks, three problems!',
+    mission: ['Past simple: affirmative, negative and questions (with and without did). Complete, order and create sentences.', 'Pasado simple: afirmativa, negativa y preguntas (con y sin did). Completa, ordena y crea oraciones.'] },
+  { name: 'Neon Message City', boss: 'NOIZU', title: ['the Message Phantom', 'el Fantasma de los Mensajes'], taunt: 'I scrambled all the messages! Bzzzt!',
+    mission: ['Final boss! Use everything you know to fix the text messages between Emi and Leo.', '¡Jefe final! Usa todo lo que sabes para reparar los mensajes entre Emi y Leo.'] }
+];
+
+/* ---------- TEXT (English / Spanish help) ---------- */
+const T = {
+  en: {
+    tagline: 'Words are your power. Defeat 4 bosses with your English!', start: 'Start adventure', howto: 'How to play',
+    h1: 'Travel through 4 worlds. A boss waits in each one.', h2: 'A correct answer hits the boss.', h3: 'A wrong answer costs one heart. You have 3 hearts in each world.',
+    h4: 'After a mistake, read the explanation. That question comes back later!', h5: 'You will read, listen, write and speak in English.', h6: 'Press the pause button to stop, restart or change options.',
+    sfx: 'Sound effects', speakOpt: 'Speaking bonus', langBtn: 'Ayuda en español', best: 'Best score',
+    voiceLbl: 'English voice', testVoice: 'Test', voiceTip: 'The voice comes from this device. ★ is the best one found. Edge and Chrome usually have the most natural voices.',
+    noVoice: 'No English voice was found on this device, so listening questions will show the text. For audio, open the game in Edge or Chrome.',
+    noVoiceQ: 'This device has no English voice, so here is the text.',
+    chooseT: 'Choose your fighter', hair: 'Hair', skin: 'Skin', outfit: 'Jacket', accent: 'Details', weapon: 'Word weapon',
+    nameLbl: 'Fighter name (optional)', random: 'Surprise me', ready: "I'm ready!", back: 'Back',
+    world: 'World', mission: 'Your mission', fight: 'Fight!', practiceName: 'Mistake Dojo',
+    iMc: 'Choose the correct option', iListen: 'Listen and choose', iType: 'Write the answer', iListenType: 'Listen and write the missing word', iChat: 'Complete the message',
+    iOrder: { aff: 'Put the words in order: affirmative sentence', neg: 'Put the words in order: negative sentence', que: 'Put the words in order: question' },
+    iBuild: { aff: 'Create your own AFFIRMATIVE sentence', neg: 'Create your own NEGATIVE sentence', que: 'Create your own QUESTION' },
+    iVerb1: 'Regular or irregular?', iVerb2: 'Now choose the past form', regular: 'Regular', irregular: 'Irregular', regHint: 'adds -ed', irrHint: 'changes',
+    who: 'Who?', action: 'Action', rest: 'What? Where?', verbHint: 'Verb', listenBtn: 'Listen', showText: "Can't hear it? Show the text", voiceMsg: 'Voice message',
+    check: 'Check', typeHere: 'Type here', tapWords: 'Tap the words below', pickEach: 'Pick one from each row',
+    correct: 'Correct!', wrong: 'Not this time!', yourAns: 'Your answer', rightAns: 'Correct answer', why: 'Why?', remember: 'Remember', heard: 'You heard',
+    comeback: 'This question will come back later.', apos: "Watch the apostrophe: didn't.", cont: 'Continue', lostHeart: 'You lose 1 heart',
+    bonusT: 'Voice power-up!', bonusD: 'Listen, then say it aloud:', saidIt: 'I said it!', bonusOk: 'Great speaking!',
+    hit: 'HIT!', miss: 'MISS!', again: 'Scrambled again!',
+    clearT: 'Boss defeated!', clearD: 'is out of the fight.', heartsBonus: 'Hearts bonus', nextWorld: 'Next world', seeReport: 'See my report',
+    defeatT: 'You were defeated…', defeatD: 'wins this time. Read your mistakes and try again!', retryWorld: 'Try this world again', menu: 'Main menu',
+    paused: 'Paused', resume: 'Resume', restartWorld: 'Restart this world', restartGame: 'Restart the game', sure: 'Sure? Tap again',
+    report: 'Adventure report', score: 'Score', accuracy: 'Accuracy', streak: 'Best streak', worlds: 'Worlds cleared', byWorld: 'By world', bySkill: 'By skill',
+    reading: 'Reading', listening: 'Listening', writing: 'Writing', speaking: 'Speaking', spoken: 'sentences said aloud',
+    mistakes: 'Your mistakes', noMistakes: 'No mistakes to practise. Perfect!', practice: 'Practise my mistakes', playAgain: 'Play again',
+    rank: ['Traveller in training', 'Brave traveller', 'Legendary traveller'], mastered: 'Mistakes fixed in the dojo', notPlayed: 'not played',
+    dojoTaunt: 'I am made of your mistakes. Fix them and I disappear!', dojoMission: 'Only the questions you missed. No hearts lost here: take your time.'
+  },
+  es: {
+    tagline: 'Las palabras son tu poder. ¡Derrota a 4 jefes con tu inglés!', start: 'Comenzar aventura', howto: 'Cómo jugar',
+    h1: 'Viaja por 4 mundos. En cada uno te espera un jefe.', h2: 'Una respuesta correcta golpea al jefe.', h3: 'Una respuesta incorrecta cuesta un corazón. Tienes 3 corazones en cada mundo.',
+    h4: 'Después de un error, lee la explicación. ¡Esa pregunta vuelve más tarde!', h5: 'Vas a leer, escuchar, escribir y hablar en inglés.', h6: 'Presiona el botón de pausa para detener, reiniciar o cambiar opciones.',
+    sfx: 'Efectos de sonido', speakOpt: 'Bono de speaking', langBtn: 'Ayuda en español', best: 'Mejor puntaje',
+    voiceLbl: 'Voz en inglés', testVoice: 'Probar', voiceTip: 'La voz viene de este dispositivo. ★ es la mejor que se encontró. Edge y Chrome suelen tener las voces más naturales.',
+    noVoice: 'No se encontró una voz en inglés en este dispositivo, así que las preguntas de listening mostrarán el texto. Para tener audio, abre el juego en Edge o Chrome.',
+    noVoiceQ: 'Este dispositivo no tiene voz en inglés, así que aquí está el texto.',
+    chooseT: 'Elige tu personaje', hair: 'Pelo', skin: 'Piel', outfit: 'Chaqueta', accent: 'Detalles', weapon: 'Arma de palabras',
+    nameLbl: 'Nombre de tu personaje (opcional)', random: 'Sorpréndeme', ready: '¡A la aventura!', back: 'Volver',
+    world: 'Mundo', mission: 'Tu misión', fight: '¡A luchar!', practiceName: 'Dojo de errores',
+    iMc: 'Elige la opción correcta', iListen: 'Escucha y elige', iType: 'Escribe la respuesta', iListenType: 'Escucha y escribe la palabra que falta', iChat: 'Completa el mensaje',
+    iOrder: { aff: 'Ordena las palabras: oración afirmativa', neg: 'Ordena las palabras: oración negativa', que: 'Ordena las palabras: pregunta' },
+    iBuild: { aff: 'Crea tu propia oración AFIRMATIVA', neg: 'Crea tu propia oración NEGATIVA', que: 'Crea tu propia PREGUNTA' },
+    iVerb1: '¿Regular o irregular?', iVerb2: 'Ahora elige la forma en pasado', regular: 'Regular', irregular: 'Irregular', regHint: 'agrega -ed', irrHint: 'cambia',
+    who: '¿Quién?', action: 'Acción', rest: '¿Qué? ¿Dónde?', verbHint: 'Verbo', listenBtn: 'Escuchar', showText: '¿No puedes escuchar? Ver el texto', voiceMsg: 'Mensaje de voz',
+    check: 'Comprobar', typeHere: 'Escribe aquí', tapWords: 'Toca las palabras de abajo', pickEach: 'Elige una de cada fila',
+    correct: '¡Correcto!', wrong: '¡Esta vez no!', yourAns: 'Tu respuesta', rightAns: 'Respuesta correcta', why: '¿Por qué?', remember: 'Recuerda', heard: 'Escuchaste',
+    comeback: 'Esta pregunta volverá más tarde.', apos: "Ojo con el apóstrofo: didn't.", cont: 'Continuar', lostHeart: 'Pierdes 1 corazón',
+    bonusT: '¡Poder de voz!', bonusD: 'Escucha y luego dilo en voz alta:', saidIt: '¡Lo dije!', bonusOk: '¡Muy bien dicho!',
+    hit: 'HIT!', miss: 'MISS!', again: '¡Mezclado otra vez!',
+    clearT: '¡Jefe derrotado!', clearD: 'queda fuera de combate.', heartsBonus: 'Bono de corazones', nextWorld: 'Siguiente mundo', seeReport: 'Ver mi reporte',
+    defeatT: 'Te derrotaron…', defeatD: 'gana esta vez. ¡Lee tus errores e inténtalo de nuevo!', retryWorld: 'Reintentar este mundo', menu: 'Menú principal',
+    paused: 'Pausa', resume: 'Continuar', restartWorld: 'Reiniciar este mundo', restartGame: 'Reiniciar el juego', sure: '¿Seguro? Toca otra vez',
+    report: 'Reporte de aventura', score: 'Puntaje', accuracy: 'Precisión', streak: 'Mejor racha', worlds: 'Mundos superados', byWorld: 'Por mundo', bySkill: 'Por habilidad',
+    reading: 'Reading', listening: 'Listening', writing: 'Writing', speaking: 'Speaking', spoken: 'oraciones dichas en voz alta',
+    mistakes: 'Tus errores', noMistakes: 'No hay errores para practicar. ¡Perfecto!', practice: 'Practicar mis errores', playAgain: 'Jugar otra vez',
+    rank: ['Viajero en entrenamiento', 'Viajero valiente', 'Viajero legendario'], mastered: 'Errores corregidos en el dojo', notPlayed: 'sin jugar',
+    dojoTaunt: 'I am made of your mistakes. Fix them and I disappear!', dojoMission: 'Solo las preguntas que fallaste. Aquí no pierdes corazones: tómate tu tiempo.'
+  }
+};
+
+/* ---------- STATE + HELPERS ---------- */
+const app = document.getElementById('app');
+const S = { lang: 'en', sound: true, speak: true, best: 0, screen: 'title', mode: 'story', level: 0, lives: 3, score: 0, levelStartScore: 0,
+  streak: 0, bestStreak: 0, queue: [], qi: 0, hp: 0, hpMax: 0, okInLevel: 0, chat: [], mistakes: [], stats: null, fb: null, work: null, fixed: 0, defeated: false,
+  hero: { kind: 'boy', hair: '#3a5bff', skin: '#ffd9b8', outfit: '#ffc93c', accent: '#ff4f8b', weapon: 'pencil', name: '' } };
+// Fighter options: every list is [value, English name, Spanish name]
+const LOOKS = {
+  hair: [['#3a5bff', 'blue', 'azul'], ['#2a2540', 'black', 'negro'], ['#7a4a2a', 'brown', 'castaño'], ['#f2b632', 'blonde', 'rubio'], ['#e2452f', 'red', 'rojo'], ['#b05cff', 'purple', 'morado'], ['#19b8a6', 'teal', 'turquesa'], ['#ff7ab8', 'pink', 'rosado']],
+  skin: [['#ffe3cc', 'tone 1', 'tono 1'], ['#ffd9b8', 'tone 2', 'tono 2'], ['#eeb98f', 'tone 3', 'tono 3'], ['#c98d62', 'tone 4', 'tono 4'], ['#9a6340', 'tone 5', 'tono 5'], ['#6e4429', 'tone 6', 'tono 6']],
+  outfit: [['#ffc93c', 'yellow', 'amarillo'], ['#ff6b5c', 'red', 'rojo'], ['#3ddc97', 'green', 'verde'], ['#4fe3ea', 'light blue', 'celeste'], ['#b98cff', 'purple', 'morado'], ['#fff4d2', 'white', 'blanco']],
+  accent: [['#ff4f8b', 'pink', 'rosado'], ['#ff8a3c', 'orange', 'naranja'], ['#4fe3ea', 'light blue', 'celeste'], ['#3ddc97', 'green', 'verde'], ['#7b3ff2', 'purple', 'morado'], ['#fff4d2', 'white', 'blanco']],
+  weapon: [['pencil', 'Pencil', 'Lápiz'], ['ruler', 'Ruler', 'Regla'], ['brush', 'Brush', 'Pincel']],
+  kind: [['boy', 'Boy', 'Niño'], ['girl', 'Girl', 'Niña']]
+};
+const t = k => (T[S.lang][k] !== undefined ? T[S.lang][k] : T.en[k]);
+const li = () => (S.lang === 'es' ? 1 : 0);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, n) => shuffle(a).slice(0, n);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const norm = s => String(s).toLowerCase().replace(/[‘’`´]/g, "'").replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim();
+const noEmoji = s => String(s).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, '').replace(/\s+/g, ' ').trim();
+const withGap = s => esc(s).replace('___', '<span class="gap">___</span>');
+const freshStats = () => ({ levels: [0, 1, 2, 3].map(() => ({ att: 0, ok: 0 })), skills: { reading: { att: 0, ok: 0 }, listening: { att: 0, ok: 0 }, writing: { att: 0, ok: 0 } }, spoken: 0, cleared: 0 });
+const store = { get() { try { return JSON.parse(localStorage.getItem('holidayBattle') || '{}'); } catch (e) { return {}; } }, set(o) { try { localStorage.setItem('holidayBattle', JSON.stringify(o)); } catch (e) { /* storage unavailable */ } } };
+const savePrefs = () => store.set({ lang: S.lang, sound: S.sound, speak: S.speak, best: S.best, hero: S.hero, voice: S.voice });
+
+/* ---------- SOUND ---------- */
+let AC = null;
+function sfx(notes) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    let at = AC.currentTime;
+    for (const [f, d, type] of notes) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type || 'square'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.07, at); g.gain.exponentialRampToValueAtTime(0.001, at + d);
+      o.connect(g); g.connect(AC.destination); o.start(at); o.stop(at + d); at += d * 0.85;
+    }
+  } catch (e) { /* no audio */ }
+}
+const SND = { hit: [[440, .08], [660, .08], [990, .14]], miss: [[220, .12, 'sawtooth'], [150, .22, 'sawtooth']], win: [[523, .1], [659, .1], [784, .1], [1047, .28]], lose: [[392, .18, 'triangle'], [311, .18, 'triangle'], [233, .4, 'triangle']], tap: [[700, .04]] };
+// The voice comes from the device. Rank the English voices so the most natural one is used first.
+let VOICES = [], VOICE = null, NO_EN = false; // NO_EN: the device has voices, but none of them is English
+function voiceScore(v) {
+  const n = v.name;
+  return (/natural|neural|enhanced|premium/i.test(n) ? 60 : 0) + (/google/i.test(n) ? 30 : 0) + (/online/i.test(n) ? 10 : 0) +
+    (/^en[-_]US/i.test(v.lang) ? 8 : /^en[-_]GB/i.test(v.lang) ? 6 : 0) + // American English first
+    (/sonia|libby|jenny|aria|samantha|serena|kate|martha|karen|moira|daniel|ryan|guy/i.test(n) ? 3 : 0) -
+    (/espeak|compact|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|zarvox|trinoids|boing|bubbles|cellos|jester|organ|wobble|superstar|bahh|bells|bad news|whisper|junior|ralph|fred|kathy/i.test(n) ? 80 : 0);
+}
+function loadVoices() {
+  try {
+    const all = speechSynthesis.getVoices();
+    VOICES = all.filter(v => /^en([-_]|$)/i.test(v.lang)).sort((a, b) => voiceScore(b) - voiceScore(a));
+    NO_EN = all.length > 0 && VOICES.length === 0;
+  } catch (e) { VOICES = []; }
+  VOICE = VOICES.find(v => v.name === S.voice) || VOICES[0] || null;
+  const row = document.getElementById('voiceRow');
+  if (row) row.outerHTML = voiceRow();
+}
+function say(text) {
+  try {
+    if (!('speechSynthesis' in window) || NO_EN) return false; // never read English with a voice from another language
+    const u = new SpeechSynthesisUtterance(noEmoji(text).replace(/→/g, ','));
+    if (VOICE) { u.voice = VOICE; u.lang = VOICE.lang; } else u.lang = 'en-US';
+    u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    return true;
+  } catch (e) { return false; }
+}
+const hush = () => { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } };
+
+/* ---------- QUESTIONS ---------- */
+const keyOf = q => q.type + '|' + (q.prompt || q.audio || q.verb || (q.tiles && q.tiles.join(' ')) || (q.form + q.set.subj[0]));
+const sentenceOf = q => cap(q.tiles.join(' ')) + (q.form === 'que' ? '?' : '.');
+const answerOf = q => q.type === 'type' ? q.answers[0] : q.type === 'order' ? sentenceOf(q) : q.type === 'verb2' ? verbOf(q.verb)[1] : q.type === 'build' ? '' : q.options[0];
+// The complete correct sentence, used in feedback and for the speaking bonus
+function fullOf(q) {
+  if (q.type === 'order') return sentenceOf(q);
+  if (q.type === 'verb2') return q.verb + ' → ' + verbOf(q.verb)[1];
+  if (q.type === 'listen') return q.audio;
+  if (q.type === 'build') return '';
+  let p = q.prompt; const g = p.indexOf('___'); if (g < 0) return '';
+  const c = p.lastIndexOf(': ', g); if (c >= 0) p = p.slice(c + 2);
+  return p.replace('___', answerOf(q));
+}
+
+function buildLevel(n) {
+  let qs;
+  if (n === 0) {
+    qs = shuffle([...pick(W1.gap, 3), ...pick(W1.ctx, 1), ...pick(W1.nouns, 2), ...pick(W1.listen, 1), ...pick(W1.write.filter(q => !(NO_EN && q.audio)), 1)]);
+  } else if (n === 1) {
+    const nr = Math.random() < 0.5 ? 2 : 3;
+    const vs = [...pick(VERBS.filter(v => v[2] !== 'irr'), nr), ...pick(VERBS.filter(v => v[2] === 'irr'), 5 - nr)];
+    const used = new Set(vs.map(v => v[0]));
+    const s = pick(W2_SENT.filter(x => !used.has(x[1])), 1)[0]; used.add(s[1]);
+    const l = pick(W2_LISTEN.filter(x => !used.has(x[1])), 1)[0]; used.add(l[1]);
+    const w = pick(VERBS.filter(v => !used.has(v[0])), 1)[0];
+    const lp = verbOf(l[1])[1];
+    qs = shuffle([
+      ...vs.map(v => ({ type: 'verb2', skill: 'reading', verb: v[0], ex: verbEx(v[0]) })),
+      { type: 'mc', skill: 'reading', prompt: s[0], hint: s[1], options: [s[3] || verbOf(s[1])[1], ...s[2]], ex: s[3] ? [s[4], s[5]] : verbEx(s[1]) },
+      { type: 'listen', skill: 'listening', audio: l[0], question: 'Which verb is in the sentence? (It is in the past!)', options: [l[1], ...l[2]],
+        ex: ['You heard "' + lp + '". It is the past of "' + l[1] + '".', 'Escuchaste "' + lp + '". Es el pasado de "' + l[1] + '".'] },
+      { type: 'type', skill: 'writing', prompt: 'Write the past simple: ' + w[0] + ' → ___', answers: [w[1]], ex: verbEx(w[0]) }
+    ]);
+  } else if (n === 2) {
+    const forms = ['aff', 'neg', 'que'], sets = shuffle(W3_BUILD);
+    qs = [
+      ...shuffle([...forms, 'subj'].map(f => pick(W3_COMPLETE[f], 1)[0])),
+      ...shuffle(forms.map(f => pick(W3_ORDER[f], 1)[0])),
+      ...shuffle(forms.map((f, i) => ({ type: 'build', skill: 'writing', form: f, set: sets[i] })))
+    ];
+  } else {
+    qs = []; let pre = [];
+    for (const line of pick(CHATS, 1)[0]) {
+      if (line.q) { qs.push(Object.assign({}, line.q, { chat: { who: line.who, pre, post: [] } })); pre = []; } else pre.push(line);
+    }
+    if (qs.length) qs[qs.length - 1].chat.post = pre;
+  }
+  return qs.slice(0, CFG.perLevel[n]).map(q => Object.assign({}, q, { level: n, ex: q.ex || EX3[q.form] }));
+}
+
+function buildParts(q) {
+  if (q._b) return q._b;
+  const s = q.set, f = q.form, w = pick(s.verbs, 2);
+  const verbs = f === 'aff' ? [...s.verbs.map(v => v[1]), w[0][2], w[1][2]]
+    : f === 'neg' ? [...s.verbs.map(v => "didn't " + v[0]), "didn't " + w[0][1], "didn't " + w[1][1]]
+    : [...s.verbs.map(v => v[0]), w[0][1], w[1][1]];
+  return (q._b = { subj: shuffle(f === 'que' ? s.qsubj : s.subj), verbs: shuffle(verbs), ends: shuffle(Object.keys(s.ends)) });
+}
+const buildSentence = (f, sub, verb, end) => f === 'que' ? 'Did ' + sub + ' ' + verb + ' ' + end + '?' : cap(sub) + ' ' + verb + ' ' + end + '.';
+function checkBuild(q, sub, verb, end) {
+  const s = q.set, f = q.form, core = verb.replace("didn't ", '');
+  const v = s.verbs.find(x => x.includes(core));
+  const formOk = f === 'aff' ? v[1] === core : v[0] === core;
+  const collOk = s.ends[end] === v[0];
+  const good = s.verbs.find(x => x[0] === s.ends[end]);
+  const goodVerb = f === 'aff' ? good[1] : f === 'neg' ? "didn't " + good[0] : good[0];
+  const ex = EX3[f].slice();
+  if (!formOk) {
+    ex[0] += f === 'aff' ? ' "' + core + '" is not correct: ' + v[0] + ' → ' + v[1] + '.' : ' Use "' + v[0] + '", not "' + core + '".';
+    ex[1] += f === 'aff' ? ' "' + core + '" no es correcto: ' + v[0] + ' → ' + v[1] + '.' : ' Usa "' + v[0] + '", no "' + core + '".';
+  }
+  if (!collOk) {
+    ex[0] += ' "' + cap(v[0]) + '" does not go with "' + end + '". We say "' + good[0] + ' ' + end + '".';
+    ex[1] += ' "' + cap(v[0]) + '" no va con "' + end + '". Se dice "' + good[0] + ' ' + end + '".';
+  }
+  return { ok: formOk && collOk, given: buildSentence(f, sub, verb, end), correct: buildSentence(f, sub, goodVerb, end), ex };
+}
+function checkTyped(q, raw) {
+  const n = norm(raw), ans = q.answers.map(norm), strip = s => s.replace(/'/g, '');
+  if (ans.includes(n) || n === norm(noEmoji(fullOf(q)))) return { ok: true };
+  if (ans.map(strip).includes(strip(n))) return { ok: true, note: 'apos' };
+  return { ok: false };
+}
+/* ---------- SCREENS ---------- */
+const $ = s => document.querySelector(s);
+const btn = (act, label, cls, attrs) => '<button type="button" class="btn ' + (cls || '') + '" data-act="' + act + '" ' + (attrs || '') + '>' + label + '</button>';
+const onOff = v => (v ? 'ON' : 'OFF');
+const toggles = () => '<div class="row center">' +
+  btn('tSound', '🔔 ' + t('sfx') + ': ' + onOff(S.sound), 'small toggle', 'aria-pressed="' + S.sound + '"') +
+  btn('tSpeak', '🎤 ' + t('speakOpt') + ': ' + onOff(S.speak), 'small toggle', 'aria-pressed="' + S.speak + '"') +
+  btn('tLang', '🌎 ' + t('langBtn') + ': ' + onOff(S.lang === 'es'), 'small toggle', 'aria-pressed="' + (S.lang === 'es') + '"') + '</div>' + voiceRow();
+function voiceRow() {
+  return '<div class="voice" id="voiceRow"><label class="eyebrow" for="voiceSel">🗣 ' + t('voiceLbl') + '</label>' +
+    (VOICES.length
+      ? '<div class="row center"><select class="sel" id="voiceSel">' + VOICES.map((v, i) => '<option value="' + esc(v.name) + '"' + (v === VOICE ? ' selected' : '') + '>' +
+          esc(v.name.replace(/^Microsoft |^Google /, '')) + (i === 0 ? ' ★' : '') + '</option>').join('') + '</select>' + btn('testVoice', '🔊 ' + t('testVoice'), 'small') + '</div>' +
+        '<p class="muted small">' + t('voiceTip') + '</p>'
+      : '<p class="muted small">' + t('noVoice') + '</p>') + '</div>';
+}
+const bossName = () => (S.mode === 'practice' ? 'KAGE' : WORLDS[S.level].boss);
+function stageHTML(world, bar) {
+  return '<section class="stage w' + world + '">' + '<div class="scene">' + ART.scene(world) + '</div>' +
+    (bar ? '<div class="bossbar"><span class="nm">' + bossName() + '</span><div class="hp"><i id="hpFill"></i></div><span id="hpNum"></span></div>' : '') +
+    '<div class="fighter hero" id="hero">' + ART.hero() + '</div><div class="fighter boss" id="boss">' + ART['boss' + world]() + '</div>' +
+    (S.hero.name ? '<span class="nametag">' + esc(S.hero.name) + '</span>' : '') +
+    '<div class="fx" id="fx"></div><div class="pop" id="pop" aria-hidden="true"></div></section>';
+}
+const top = () => { try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } };
+
+function showTitle() {
+  S.screen = 'title'; hush();
+  const how = [['4', 'h1'], ['💥', 'h2'], ['♥', 'h3'], ['↩', 'h4'], ['🔊', 'h5'], ['⏸', 'h6']];
+  app.innerHTML = '<main class="stack">' +
+    '<header class="stack center" style="gap:4px;padding-top:6px"><p class="kana" lang="ja">ホリデー・バトル</p><h1 class="logo">Holiday<br>Battle</h1><p style="font-weight:800">' + t('tagline') + '</p></header>' +
+    '<section class="stage w1"><div class="scene">' + ART.scene(1) + '</div><div class="fighter hero">' + ART.hero() + '</div><div class="teaser">' + ART.boss1() + ART.boss2() + ART.boss3() + ART.boss4() + '</div></section>' +
+    '<div class="row center">' + btn('start', '▶ ' + t('start'), 'primary') + '</div>' +
+    '<section class="panel stack"><h2 class="display" style="font-size:1.4rem;color:var(--sun)">' + t('howto') + '</h2><ul class="howto">' +
+    how.map(h => '<li><b class="ic" aria-hidden="true">' + h[0] + '</b><span>' + t(h[1]) + '</span></li>').join('') + '</ul></section>' +
+    toggles() + (S.best ? '<p class="center muted" style="text-align:center">★ ' + t('best') + ': ' + S.best + '</p>' : '') + '</main>';
+  top();
+}
+
+/* Choose and customise the fighter */
+function showFighter(keepScroll) {
+  S.screen = 'fighter'; hush();
+  const h = S.hero, nm = o => o[1 + li()];
+  const row = (label, body) => '<div class="slot"><span class="eyebrow">' + label + '</span>' + body + '</div>';
+  const swatches = key => '<div class="swatches">' + LOOKS[key].map(o =>
+    '<button type="button" class="swatch" data-act="hset" data-k="' + key + '" data-v="' + o[0] + '" aria-pressed="' + (h[key] === o[0]) + '" aria-label="' + t(key) + ': ' + nm(o) + '" title="' + nm(o) + '" style="background:' + o[0] + '"></button>').join('') + '</div>';
+  app.innerHTML = '<main class="stack">' +
+    '<header class="stack" style="gap:2px"><p class="eyebrow">Holiday Battle</p><h1 class="display" style="font-size:clamp(1.7rem,7vw,2.6rem)">' + t('chooseT') + '</h1></header>' +
+    '<div class="fighter-grid">' +
+    '<section class="stage w1 pick"><div class="scene">' + ART.scene(1) + '</div><div class="fighter hero big" id="heroPrev">' + ART.hero() + '</div>' +
+    '<span class="nametag" id="nameTag"' + (h.name ? '' : ' hidden') + '>' + esc(h.name) + '</span></section>' +
+    '<section class="panel stack">' +
+    '<div class="opts two">' + LOOKS.kind.map(o => '<button type="button" class="btn kind" data-act="hset" data-k="kind" data-v="' + o[0] + '" aria-pressed="' + (h.kind === o[0]) + '">' +
+      ART.hero(Object.assign({}, h, { kind: o[0] })) + '<span>' + nm(o) + '</span></button>').join('') + '</div>' +
+    row(t('hair'), swatches('hair')) + row(t('skin'), swatches('skin')) + row(t('outfit'), swatches('outfit')) + row(t('accent'), swatches('accent')) +
+    row(t('weapon'), '<div class="tiles">' + LOOKS.weapon.map(o => '<button type="button" class="tile" data-act="hset" data-k="weapon" data-v="' + o[0] + '" aria-pressed="' + (h.weapon === o[0]) + '">' + nm(o) + '</button>').join('') + '</div>') +
+    '<label class="slot" for="heroName"><span class="eyebrow">' + t('nameLbl') + '</span><input class="inp" id="heroName" type="text" maxlength="12" autocomplete="off" spellcheck="false" value="' + esc(h.name) + '"></label>' +
+    '</section></div>' +
+    '<div class="row center">' + btn('menu', '◀ ' + t('back'), 'ghost') + btn('hrandom', '🎲 ' + t('random'), '') + btn('ready', t('ready') + ' ▶', 'primary') + '</div></main>';
+  if (!keepScroll) top();
+}
+
+function newGame() {
+  Object.assign(S, { mode: 'story', level: 0, score: 0, streak: 0, bestStreak: 0, mistakes: [], stats: freshStats(), fixed: 0, defeated: false });
+  showIntro();
+}
+function showIntro() {
+  S.screen = 'intro'; hush();
+  const p = S.mode === 'practice', w = WORLDS[S.level];
+  app.innerHTML = '<main class="stack">' +
+    '<header class="stack" style="gap:2px"><p class="eyebrow">' + (p ? t('practiceName') : t('world') + ' ' + (S.level + 1) + ' / 4') + '</p>' +
+    '<h1 class="display" style="font-size:clamp(1.7rem,7vw,2.7rem)">' + (p ? t('practiceName') : w.name) + '</h1></header>' +
+    stageHTML(p ? 0 : S.level + 1, false) +
+    '<section class="panel stack"><p><b class="display" style="color:var(--sun);font-size:1.3rem">' + bossName() + '</b>' + (p ? '' : ', ' + w.title[li()]) + '</p>' +
+    '<p class="prompt">“' + (p ? t('dojoTaunt') : w.taunt) + '”</p><p class="eyebrow">' + t('mission') + '</p><p>' + (p ? t('dojoMission') : w.mission[li()]) + '</p>' +
+    btn('fight', '⚔ ' + t('fight'), 'primary wide') + '</section></main>';
+  top();
+}
+function startLevel() {
+  Object.assign(S, { mode: 'story', lives: CFG.lives, queue: buildLevel(S.level), qi: 0, okInLevel: 0, chat: [], levelStartScore: S.score, fb: null, work: null, defeated: false, screen: 'battle' });
+  S.hpMax = S.hp = S.queue.length;
+  renderBattle(); top();
+}
+function startPractice() {
+  Object.assign(S, { mode: 'practice', qi: 0, okInLevel: 0, chat: [], fb: null, work: null,
+    queue: shuffle(S.mistakes.map(m => Object.assign({}, m.q, { _opts: null, _b: null, retry: true }))) });
+  S.hpMax = S.hp = S.queue.length;
+  showIntro();
+}
+
+function showClear() {
+  S.screen = 'clear';
+  const bonus = S.lives * 50, last = S.level === 3;
+  S.score += bonus; S.stats.cleared = Math.max(S.stats.cleared, S.level + 1);
+  app.innerHTML = '<main class="stack center" style="padding-top:24px">' +
+    '<p class="eyebrow">' + t('world') + ' ' + (S.level + 1) + ' / 4 · ' + WORLDS[S.level].name + '</p>' +
+    '<h1 class="logo" style="font-size:clamp(2.2rem,10vw,4rem)">' + t('clearT') + '</h1>' +
+    '<div style="width:min(60%,220px)">' + ART.hero() + '</div>' +
+    '<section class="panel stack" style="width:100%"><p><b>' + WORLDS[S.level].boss + '</b> ' + t('clearD') + '</p>' +
+    '<div class="stats" style="grid-template-columns:1fr 1fr"><div class="stat"><b>+' + bonus + '</b>' + t('heartsBonus') + ' ' + '♥'.repeat(S.lives) + '</div><div class="stat"><b>' + S.score + '</b>' + t('score') + '</div></div>' +
+    btn(last ? 'report' : 'nextWorld', (last ? t('seeReport') : t('nextWorld')) + ' ▶', 'primary wide') + '</section></main>';
+  top();
+}
+function showDefeat() {
+  S.screen = 'defeat'; S.defeated = true; sfx(SND.lose);
+  app.innerHTML = '<main class="stack center" style="padding-top:24px">' +
+    '<p class="eyebrow">' + t('world') + ' ' + (S.level + 1) + ' / 4 · ' + WORLDS[S.level].name + '</p>' +
+    '<h1 class="display" style="font-size:clamp(1.9rem,8vw,3rem);color:var(--bad)">' + t('defeatT') + '</h1>' +
+    '<div style="width:min(60%,220px)">' + ART['boss' + (S.level + 1)]() + '</div>' +
+    '<section class="panel stack" style="width:100%"><p><b>' + WORLDS[S.level].boss + '</b> ' + t('defeatD') + '</p>' +
+    btn('retryWorld', '↻ ' + t('retryWorld'), 'primary wide') + btn('report', t('seeReport'), 'wide') + btn('menu', t('menu'), 'ghost wide') + '</section></main>';
+  top();
+}
+
+function qLabel(q) {
+  if (q.type === 'listen') return '🔊 ' + q.question;
+  if (q.type === 'verb2') return t('iVerb1') + ' ' + q.verb.toUpperCase();
+  if (q.type === 'order') return t('iOrder')[q.form] + ': ' + shuffle(q.tiles).join(' / ');
+  if (q.type === 'build') return t('iBuild')[q.form];
+  return noEmoji(q.prompt);
+}
+function showSummary() {
+  S.screen = 'summary'; hush();
+  const st = S.stats, sum = k => st.levels.reduce((a, l) => a + l[k], 0), att = sum('att'), ok = sum('ok'), acc = att ? Math.round(ok / att * 100) : 0;
+  if (S.score > S.best) { S.best = S.score; savePrefs(); }
+  const rank = t('rank')[acc >= 90 && st.cleared === 4 ? 2 : acc >= 70 ? 1 : 0];
+  const bar = (label, o) => '<div class="bar"><span>' + label + '</span><span>' + (o.att ? o.ok + ' / ' + o.att : t('notPlayed')) + '</span><div class="hp"><i style="width:' + (o.att ? o.ok / o.att * 100 : 0) + '%"></i></div></div>';
+  const stat = (v, label) => '<div class="stat"><b>' + v + '</b>' + label + '</div>';
+  app.innerHTML = '<main class="stack">' +
+    '<header class="stack center" style="gap:4px;padding-top:10px"><p class="eyebrow">' + t('report') + (S.hero.name ? ' · ' + esc(S.hero.name) : '') + '</p><h1 class="logo" style="font-size:clamp(1.8rem,8vw,3.2rem)">' + rank + '</h1>' +
+    '<div style="width:min(40%,130px)">' + ART.hero() + '</div></header>' +
+    '<div class="stats">' + stat(S.score, t('score')) + stat(acc + '%', t('accuracy')) + stat(S.bestStreak, t('streak')) + stat(st.cleared + ' / 4', t('worlds')) + '</div>' +
+    '<div class="cols"><section class="panel stack"><h2 class="eyebrow">' + t('byWorld') + '</h2><div class="bars">' + WORLDS.map((w, i) => bar((i + 1) + '. ' + w.name, st.levels[i])).join('') + '</div></section>' +
+    '<section class="panel stack"><h2 class="eyebrow">' + t('bySkill') + '</h2><div class="bars">' + ['reading', 'listening', 'writing'].map(k => bar(t(k), st.skills[k])).join('') +
+    '<div class="bar"><span>' + t('speaking') + '</span><span>' + st.spoken + ' ' + t('spoken') + '</span></div></div></section></div>' +
+    '<section class="panel stack"><h2 class="eyebrow">' + t('mistakes') + ' (' + S.mistakes.length + ')</h2>' +
+    (S.fixed ? '<p><span class="badge">✔ ' + t('mastered') + ': ' + S.fixed + '</span></p>' : '') +
+    (S.mistakes.length ? '<ul class="mist">' + S.mistakes.map(m => '<li><span class="q">' + esc(qLabel(m.q)) + '</span><span class="y">✖ ' + t('yourAns') + ': ' + esc(m.given) + '</span><span class="c">✔ ' + t('rightAns') + ': ' + esc(m.correct) + '</span><span>' + esc(m.ex[li()]) + '</span></li>').join('') + '</ul>'
+      : '<p>' + t('noMistakes') + '</p>') + '</section>' +
+    '<div class="stack">' + (S.mistakes.length ? btn('practice', '🥋 ' + t('practice') + ' (' + S.mistakes.length + ')', 'primary wide') : '') +
+    (S.defeated ? btn('retryWorld', '↻ ' + t('retryWorld'), 'wide') : '') + btn('start', '↻ ' + t('playAgain'), S.mistakes.length ? 'wide' : 'primary wide') + btn('menu', t('menu'), 'ghost wide') + '</div></main>';
+  top();
+}
+
+function pauseHTML() {
+  return '<div class="panel stack"><h2 class="display" style="font-size:1.8rem;color:var(--sun);text-align:center">⏸ ' + t('paused') + '</h2>' +
+    btn('resume', '▶ ' + t('resume'), 'primary wide') +
+    (S.mode === 'story' ? btn('restartWorld', '↻ ' + t('restartWorld'), 'wide', 'data-confirm="1"') : '') +
+    btn('menu', '⌂ ' + t('restartGame'), 'wide', 'data-confirm="1"') + toggles() + '</div>';
+}
+function openPause() {
+  if (S.screen !== 'battle' || $('#pause')) return;
+  hush();
+  const d = document.createElement('div');
+  d.id = 'pause'; d.className = 'overlay'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', t('paused'));
+  d.innerHTML = pauseHTML(); document.body.appendChild(d);
+  d.querySelector('[data-act="resume"]').focus();
+}
+function closePause() { const d = $('#pause'); if (d) d.remove(); }
+function refresh() {
+  savePrefs();
+  if ($('#pause')) { $('#pause').innerHTML = pauseHTML(); renderBattle(); } else if (S.screen === 'title') showTitle();
+}
+/* ---------- BATTLE ---------- */
+const cur = () => S.queue[S.qi];
+const finePointer = () => { try { return window.matchMedia('(pointer:fine)').matches; } catch (e) { return false; } };
+const restart = (el, cls, keep) => { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); if (!keep) setTimeout(() => el.classList.remove(cls), 700); };
+
+function renderBattle() {
+  const p = S.mode === 'practice';
+  app.innerHTML = '<header class="hud"><span class="hud-world" id="hudWorld"></span>' +
+    '<div class="prog" id="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span><i></i></span><span><i></i></span><span><i></i></span><span><i></i></span></div>' +
+    '<span class="hud-score" id="hudScore"></span><span class="hearts" id="hearts"></span>' +
+    '<button type="button" class="btn small pause" data-act="pause" aria-label="' + t('paused') + '">⏸</button></header>' +
+    stageHTML(p ? 0 : S.level + 1, true) + '<main class="panel stack" id="panel" style="margin-top:14px"></main>';
+  updateHud();
+  if (S.fb) { $('#panel').innerHTML = '<p class="eyebrow">' + esc(qLabel(cur())) + '</p>' + feedbackHTML(); if (S.hp <= 0) $('#boss').classList.add('dead'); }
+  else renderQuestion();
+}
+function updateHud() {
+  if (!$('#hudWorld')) return;
+  const p = S.mode === 'practice', done = (S.hpMax - S.hp) / (S.hpMax || 1) * 100;
+  $('#hudWorld').textContent = p ? t('practiceName') : t('world') + ' ' + (S.level + 1) + '/4';
+  $('#hudScore').textContent = '★ ' + S.score;
+  $('#hearts').innerHTML = p ? '∞' : '♥'.repeat(Math.max(0, S.lives)) + '<span class="lost">' + '♥'.repeat(CFG.lives - Math.max(0, S.lives)) + '</span>';
+  $('#hearts').setAttribute('aria-label', p ? t('practiceName') : '♥ ' + S.lives + ' / ' + CFG.lives);
+  let total = 0;
+  $('#prog').querySelectorAll('i').forEach((el, i) => { const v = p ? done : i < S.level ? 100 : i === S.level ? done : 0; total += v / 4; el.style.width = v + '%'; });
+  $('#prog').setAttribute('aria-valuenow', Math.round(total));
+  $('#hpFill').style.width = S.hp / (S.hpMax || 1) * 100 + '%';
+  $('#hpNum').textContent = 'HP ' + S.hp + '/' + S.hpMax;
+}
+
+const bubble = (who, html, cls) => '<div class="bub ' + (who === 'Leo' ? 'r' : 'l') + ' ' + (cls || '') + '"><span class="who">' + who + '</span>' + html + '</div>';
+function chatHTML(q, pending) {
+  let now = '';
+  if (pending) {
+    const body = q.type === 'listen' ? '🎤 ' + t('voiceMsg') + ' …' : q.type === 'order' ? '<span class="gap">___ ___ ___</span>' : withGap(q.prompt);
+    now = bubble(q.chat.who, body + (q.retry ? ' <small>⚡ ' + t('again') + '</small>' : ''), 'now');
+  }
+  return S.chat.join('') + now;
+}
+const optsHTML = (opts, two) => '<div class="opts' + (two ? ' two' : '') + '" id="opts">' + opts.map((o, i) =>
+  '<button type="button" class="btn opt" data-act="opt" data-i="' + i + '"><span class="k">' + (i + 1) + '</span><span>' + esc(o) + '</span></button>').join('') + '</div>';
+// "Show the text" is only offered on choose-the-answer listening items: on listen-and-write items it would give the answer away
+const listenRow = q => '<div class="row">' + btn('play', '🔊 ' + t('listenBtn'), 'primary') + (q.type === 'listen' ? btn('reveal', '👁 ' + t('showText'), 'ghost small') + '</div><p class="why" id="transcript" hidden>“' + esc(q.audio) + '”</p>' : '</div>');
+function instrOf(q) {
+  if (q.type === 'order') return t('iOrder')[q.form];
+  if (q.type === 'build') return t('iBuild')[q.form];
+  if (q.type === 'verb2') return S.work.step === 1 ? t('iVerb1') : t('iVerb2');
+  if (q.type === 'listen') return t('iListen');
+  if (q.type === 'type') return q.audio ? t('iListenType') : q.chat ? t('iChat') + ' · ' + t('iType') : t('iType');
+  return q.chat ? t('iChat') : t('iMc');
+}
+
+function renderQuestion() {
+  const q = cur();
+  if (q.type === 'verb2') S.work = S.work || { step: 1 };
+  if (q.type === 'build') S.work = S.work || { sub: null, verb: null, end: null };
+  if (q.type === 'order' && !S.work) {
+    let pool = shuffle(q.tiles.map((_, i) => i));
+    for (let k = 0; k < 6 && pool.every((v, i) => v === i); k++) pool = shuffle(pool);
+    S.work = { pool, line: [] };
+  }
+  let h = '';
+  if (q.chat) {
+    if (!q.retry && !q._pre) { q.chat.pre.forEach(l => S.chat.push(bubble(l.who, esc(l.text)))); q._pre = true; }
+    h += '<div class="chat" id="chat" tabindex="0">' + chatHTML(q, true) + '</div>';
+  }
+  h += '<p class="eyebrow">' + instrOf(q) + '</p>';
+  const prompt = q.chat ? '' : '<p class="prompt">' + withGap(q.prompt || '') + '</p>';
+  const hint = q.hint ? '<p><span class="hintchip">' + t('verbHint') + ': ' + esc(q.hint) + '</span></p>' : '';
+  if (q.type === 'mc') {
+    h += prompt + hint + optsHTML(q._opts || (q._opts = shuffle(q.options)));
+  } else if (q.type === 'listen') {
+    h += listenRow(q) + '<p class="prompt">' + esc(q.question) + '</p>' + optsHTML(q._opts || (q._opts = shuffle(q.options)));
+  } else if (q.type === 'type') {
+    h += (q.audio ? listenRow(q) : '') + prompt + hint + '<form class="typeform" id="typeForm" autocomplete="off"><input class="inp" id="ans" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="' + t('typeHere') + '" placeholder="' + t('typeHere') + '">' +
+      '<button type="submit" class="btn primary" id="checkBtn">' + t('check') + '</button></form>';
+  } else if (q.type === 'verb2') {
+    const v = verbOf(q.verb);
+    h += '<p class="verbcard">' + esc(q.verb) + '</p>';
+    if (S.work.step === 1) {
+      h += '<div class="opts two" id="opts">' + [['reg', 'regular', 'regHint'], ['irr', 'irregular', 'irrHint']].map((o, i) =>
+        '<button type="button" class="btn opt" data-act="vclass" data-v="' + o[0] + '"><span class="k">' + (i + 1) + '</span><span>' + t(o[1]) + '<br><small>' + t(o[2]) + '</small></span></button>').join('') + '</div>';
+    } else {
+      h += '<p><span class="badge">✔ ' + t(v[2] === 'irr' ? 'irregular' : 'regular') + '</span></p>' + optsHTML(q._opts || (q._opts = shuffle([v[1], v[3], v[4], v[5]])));
+    }
+  } else if (q.type === 'order') {
+    h += '<div class="stack" id="orderBox"></div>';
+  } else if (q.type === 'build') {
+    h += '<div class="stack" id="buildBox"></div>';
+  }
+  $('#panel').innerHTML = h;
+  if (q.type === 'order') drawOrder();
+  if (q.type === 'build') drawBuild();
+  const chat = $('#chat'); if (chat) chat.scrollTop = chat.scrollHeight;
+  if (q.audio && !say(q.audio)) { const tr = $('#transcript'); if (tr) { tr.hidden = false; tr.insertAdjacentHTML('afterend', '<p class="muted small">' + t('noVoiceQ') + '</p>'); } }
+  if (q.type === 'type' && finePointer()) $('#ans').focus();
+}
+function drawOrder() {
+  const q = cur(), w = S.work, end = q.form === 'que' ? '?' : '.';
+  $('#orderBox').innerHTML = '<div class="line" id="line">' + (w.line.length ? w.line.map((ti, i) =>
+    '<button type="button" class="tile" data-act="untile" data-i="' + i + '">' + esc(i === 0 ? cap(q.tiles[ti]) : q.tiles[ti]) + '</button>').join('') + '<span class="end">' + end + '</span>'
+    : '<span class="muted">' + t('tapWords') + '</span>') + '</div>' +
+    '<div class="tiles">' + w.pool.map((ti, i) => '<button type="button" class="tile" data-act="tile" data-i="' + i + '">' + esc(q.tiles[ti]) + '</button>').join('') + '</div>' +
+    btn('checkOrder', t('check'), 'primary wide' + (w.pool.length ? ' off' : ''), w.pool.length ? 'disabled' : '');
+}
+function drawBuild() {
+  const q = cur(), w = S.work, b = buildParts(q), f = q.form;
+  const rowOf = (label, key, items) => '<div class="slot"><span class="eyebrow">' + label + '</span><div class="tiles">' + items.map(x =>
+    '<button type="button" class="tile" data-act="chip" data-k="' + key + '" data-v="' + esc(x) + '" aria-pressed="' + (w[key] === x) + '">' + esc(x) + '</button>').join('') + '</div></div>';
+  const ready = w.sub && w.verb && w.end;
+  const prev = f === 'que' ? 'Did ' + (w.sub || '___') + ' ' + (w.verb || '___') + ' ' + (w.end || '___') + '?' : cap(w.sub || '___') + ' ' + (w.verb || '___') + ' ' + (w.end || '___') + '.';
+  $('#buildBox').innerHTML = '<p class="muted">' + t('pickEach') + '</p>' + (f === 'que' ? '<p><span class="hintchip">Did … ?</span></p>' : '') +
+    rowOf(t('who'), 'sub', b.subj) + rowOf(t('action'), 'verb', b.verbs) + rowOf(t('rest'), 'end', b.ends) +
+    '<p class="preview" aria-live="polite">' + esc(prev) + '</p>' + btn('checkBuild', t('check'), 'primary wide' + (ready ? '' : ' off'), ready ? '' : 'disabled');
+}
+
+/* ---------- ANSWERS + FEEDBACK ---------- */
+function lock() { $('#panel').querySelectorAll('button:not(#nextBtn),input').forEach(el => { el.disabled = true; }); }
+function markOpts(chosenEl, rightText) {
+  $('#panel').querySelectorAll('.opt').forEach(b => {
+    const txt = b.dataset.text || b.lastElementChild.textContent;
+    if (rightText !== null && txt === rightText) { b.classList.add('is-right'); b.lastElementChild.insertAdjacentText('beforeend', ' ✔'); }
+    else if (b === chosenEl) { b.classList.add('is-wrong'); b.lastElementChild.insertAdjacentText('beforeend', ' ✖'); }
+    else b.classList.add('dim');
+  });
+}
+function resolve(q, ok, given, correct, extra) {
+  extra = extra || {};
+  const p = S.mode === 'practice', key = keyOf(q), ex = extra.ex || q.ex;
+  let gained = 0;
+  lock();
+  if (!p) { const st = S.stats; st.levels[q.level].att++; st.skills[q.skill].att++; if (ok) { st.levels[q.level].ok++; st.skills[q.skill].ok++; } }
+  if (ok) {
+    S.hp--; S.okInLevel++;
+    if (p) { const i = S.mistakes.findIndex(m => m.key === key); if (i >= 0) { S.mistakes.splice(i, 1); S.fixed++; } }
+    else { S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak); gained = 100 + Math.min(50, (S.streak - 1) * 10); S.score += gained; }
+  } else {
+    const m = S.mistakes.find(x => x.key === key);
+    if (m) { m.given = given; m.correct = correct; m.ex = ex; }
+    else S.mistakes.push({ key, q: Object.assign({}, q, { _opts: null, _b: null, _pre: true }), given, correct, ex });
+    if (!p) { S.streak = 0; S.lives--; if (S.lives > 0) S.queue.push(Object.assign({}, q, { _opts: null, _b: null, retry: true })); }
+  }
+  const full = extra.full !== undefined ? extra.full : fullOf(q);
+  S.fb = { ok, given, correct, ex, full, gained, note: extra.note || '', heard: q.audio || '', said: false,
+    bonus: ok && !p && S.speak && S.okInLevel % 3 === 0 && full ? noEmoji(full).replace(/\s*\([^)]*\)/g, '') : '' };
+  if (q.chat) {
+    const done = q.type === 'listen' ? '🎤 “' + esc(q.audio) + '”' : q.type === 'order' ? '<b class="fill">' + esc(sentenceOf(q)) + '</b>' : esc(q.prompt).replace('___', '<b class="fill">' + esc(answerOf(q)) + '</b>');
+    if (!q.retry) {
+      S.chat.push(bubble(q.chat.who, done));
+      q.chat.post.forEach(l => S.chat.push(bubble(l.who, esc(l.text))));
+    }
+    const chat = $('#chat'); if (chat) { chat.innerHTML = chatHTML(q, false) + (q.retry ? bubble(q.chat.who, done, 'now') : ''); chat.scrollTop = chat.scrollHeight; }
+  }
+  const fx = $('#fx'), pop = $('#pop');
+  if (ok) {
+    restart($('#hero'), 'attack'); restart($('#boss'), 'hit'); fx.className = 'fx'; pop.textContent = S.hp <= 0 ? 'K.O.!' : t('hit');
+    if (S.hp <= 0) setTimeout(() => { const b = $('#boss'); if (b && S.fb) b.classList.add('dead'); }, 480);
+    sfx(S.hp <= 0 ? SND.win : SND.hit);
+  } else {
+    restart($('#boss'), 'attack'); restart($('#hero'), 'hurt'); fx.className = 'fx left'; pop.textContent = t('miss'); sfx(SND.miss);
+  }
+  restart(fx, 'go'); restart(pop, 'go');
+  updateHud();
+  $('#panel').insertAdjacentHTML('beforeend', feedbackHTML());
+  const nb = $('#nextBtn');
+  try { nb.focus({ preventScroll: true }); $('#fb').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { nb.focus(); }
+}
+function feedbackHTML() {
+  const f = S.fb, p = S.mode === 'practice';
+  let h = '<section class="fb ' + (f.ok ? 'ok' : 'no') + '" id="fb" role="status">';
+  h += '<h3>' + (f.ok ? '✔ ' + t('correct') + (f.gained ? ' +' + f.gained : '') : '✖ ' + t('wrong')) + '</h3>';
+  if (!f.ok) {
+    if (!p) h += '<p>♥ ' + t('lostHeart') + '</p>';
+    h += '<p class="ans">' + t('yourAns') + ': ' + esc(f.given) + '</p><p class="ans">' + t('rightAns') + ': <b>' + esc(f.correct) + '</b></p>';
+  }
+  if (f.heard) h += '<p class="ans">' + t('heard') + ': “' + esc(f.heard) + '”</p>';
+  else if (f.full && norm(f.full) !== norm(f.correct) || f.ok && f.full) h += '<p class="ans"><b>' + esc(f.full) + '</b></p>';
+  h += '<p class="why"><b>' + (f.ok ? t('remember') : t('why')) + '</b> ' + esc(f.ex[li()]) + '</p>';
+  if (f.note) h += '<p>' + esc(t(f.note)) + '</p>';
+  if (!f.ok && !p && S.lives > 0) h += '<p class="muted">↩ ' + t('comeback') + '</p>';
+  if (f.bonus) h += '<div class="bonus" id="bonus"><p class="eyebrow">🎤 ' + t('bonusT') + '</p><p>' + t('bonusD') + '</p><p class="say">“' + esc(f.bonus) + '”</p>' +
+    (f.said ? '<p><span class="badge">✔ ' + t('bonusOk') + ' +30</span></p>' : '<div class="row">' + (NO_EN ? '' : btn('sayModel', '🔊 ' + t('listenBtn'), 'small')) + btn('saidIt', '✔ ' + t('saidIt') + ' +30', 'small') + '</div>') + '</div>';
+  return h + btn('next', t('cont') + ' ▶', 'primary wide', 'id="nextBtn"') + '</section>';
+}
+function submitTyped() {
+  const q = cur(), inp = $('#ans');
+  if (S.fb || !inp) return;
+  if (!inp.value.trim()) { restart(inp, 'shake'); inp.focus(); return; }
+  const r = checkTyped(q, inp.value);
+  resolve(q, r.ok, inp.value.trim(), q.answers[0], { note: r.note });
+}
+
+/* ---------- ACTIONS ---------- */
+const ACT = {
+  start: () => { sfx(SND.tap); showFighter(); },
+  ready: () => { sfx(SND.tap); savePrefs(); newGame(); },
+  hset: el => {
+    S.hero[el.dataset.k] = el.dataset.v; sfx(SND.tap); savePrefs(); showFighter(true);
+    const again = document.querySelector('[data-act="hset"][data-k="' + el.dataset.k + '"][data-v="' + el.dataset.v + '"]');
+    if (again) again.focus({ preventScroll: true });
+  },
+  hrandom: () => {
+    for (const k of Object.keys(LOOKS)) S.hero[k] = pick(LOOKS[k], 1)[0][0];
+    sfx(SND.hit); savePrefs(); showFighter(true);
+  },
+  fight: () => { sfx(SND.tap); if (S.mode === 'practice') { S.screen = 'battle'; renderBattle(); top(); } else startLevel(); },
+  nextWorld: () => { S.level++; showIntro(); },
+  report: () => showSummary(),
+  practice: () => startPractice(),
+  retryWorld: () => { closePause(); S.mode = 'story'; S.score = S.levelStartScore; showIntro(); },
+  restartWorld: () => { closePause(); S.score = S.levelStartScore; startLevel(); },
+  menu: () => { closePause(); showTitle(); },
+  pause: () => openPause(),
+  resume: () => closePause(),
+  tSound: () => { S.sound = !S.sound; refresh(); sfx(SND.tap); },
+  tSpeak: () => { S.speak = !S.speak; refresh(); },
+  tLang: () => { S.lang = S.lang === 'es' ? 'en' : 'es'; refresh(); },
+  testVoice: () => say('Hello! Welcome to Holiday Battle. Last summer we went sightseeing, although it was very hot.'),
+  play: () => say(cur().audio),
+  reveal: () => { $('#transcript').hidden = false; },
+  sayModel: () => say(S.fb.bonus),
+  saidIt: () => { if (!S.fb || S.fb.said) return; S.fb.said = true; S.score += 30; S.stats.spoken++; sfx(SND.hit); updateHud();
+    $('#bonus').querySelector('.row').outerHTML = '<p><span class="badge">✔ ' + t('bonusOk') + ' +30</span></p>'; },
+  opt: el => {
+    const q = cur(); if (S.fb) return;
+    const chosen = q._opts[+el.dataset.i], right = q.type === 'verb2' ? verbOf(q.verb)[1] : q.options[0];
+    markOpts(el, right);
+    resolve(q, chosen === right, chosen, right);
+  },
+  vclass: el => {
+    const q = cur(); if (S.fb) return;
+    const v = verbOf(q.verb), irr = v[2] === 'irr';
+    if ((el.dataset.v === 'irr') === irr) { S.work.step = 2; sfx(SND.tap); renderQuestion(); return; }
+    markOpts(el, null);
+    resolve(q, false, t(irr ? 'regular' : 'irregular'), t(irr ? 'irregular' : 'regular') + ': ' + v[0] + ' → ' + v[1], { full: '' });
+  },
+  tile: el => { const w = S.work; w.line.push(w.pool.splice(+el.dataset.i, 1)[0]); sfx(SND.tap); drawOrder(); },
+  untile: el => { const w = S.work; w.pool.push(w.line.splice(+el.dataset.i, 1)[0]); drawOrder(); },
+  checkOrder: () => {
+    const q = cur(); if (S.fb) return;
+    const mine = S.work.line.map(i => q.tiles[i]).join(' '), end = q.form === 'que' ? '?' : '.';
+    const ok = [q.tiles.join(' '), ...q.alts].map(norm).includes(norm(mine));
+    resolve(q, ok, cap(mine) + end, sentenceOf(q), ok ? { full: cap(mine) + end } : {});
+  },
+  chip: el => { S.work[el.dataset.k] = el.dataset.v; sfx(SND.tap); drawBuild(); },
+  checkBuild: () => {
+    const q = cur(), w = S.work; if (S.fb) return;
+    const r = checkBuild(q, w.sub, w.verb, w.end);
+    resolve(q, r.ok, r.given, r.correct, { ex: r.ex, full: r.ok ? r.given : '' });
+  },
+  next: () => {
+    hush(); const lastOk = S.fb && S.fb.ok; S.fb = null; S.work = null;
+    if (S.mode === 'story') {
+      if (S.hp <= 0) return showClear();
+      if (S.lives <= 0) return showDefeat();
+    }
+    S.qi++;
+    if (S.hp <= 0 || S.qi >= S.queue.length) return showSummary();
+    renderQuestion(); updateHud(); top(); void lastOk;
+  }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  if (el.dataset.confirm === '1') { el.dataset.confirm = '2'; el.textContent = t('sure'); return; }
+  const f = ACT[el.dataset.act]; if (f) f(el);
+});
+document.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'typeForm') submitTyped(); });
+document.addEventListener('change', e => {
+  if (e.target.id !== 'voiceSel') return;
+  S.voice = e.target.value; VOICE = VOICES.find(v => v.name === S.voice) || VOICES[0] || null; savePrefs();
+  say('Hello! This is my voice.');
+});
+document.addEventListener('input', e => {
+  if (e.target.id !== 'heroName') return;
+  S.hero.name = e.target.value.trim().slice(0, 12); savePrefs();
+  const tag = $('#nameTag'); if (tag) { tag.textContent = S.hero.name; tag.hidden = !S.hero.name; }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if ($('#pause')) closePause(); else openPause(); return; }
+  if ($('#pause') || S.screen !== 'battle' || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (/^[1-9]$/.test(e.key)) { const b = app.querySelectorAll('#opts .opt')[+e.key - 1]; if (b && !b.disabled) b.click(); }
+});
+
+const saved = store.get();
+if (saved.lang === 'es' || saved.lang === 'en') S.lang = saved.lang;
+if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+if (typeof saved.speak === 'boolean') S.speak = saved.speak;
+if (typeof saved.best === 'number') S.best = saved.best;
+if (typeof saved.voice === 'string') S.voice = saved.voice;
+try { loadVoices(); speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) { /* no speech on this device */ }
+if (saved.hero && typeof saved.hero === 'object') {
+  for (const k of Object.keys(LOOKS)) if (LOOKS[k].some(o => o[0] === saved.hero[k])) S.hero[k] = saved.hero[k];
+  if (typeof saved.hero.name === 'string') S.hero.name = saved.hero.name.slice(0, 12);
+}
+showTitle();
+})();
+</script>
+
+</body></html>
